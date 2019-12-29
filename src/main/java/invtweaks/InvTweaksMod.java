@@ -3,12 +3,16 @@ package invtweaks;
 import net.minecraft.client.gui.screen.inventory.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.container.*;
+import net.minecraft.item.*;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.stats.*;
+import net.minecraft.util.*;
 import net.minecraftforge.api.distmarker.*;
 import net.minecraftforge.client.event.*;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.*;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -19,6 +23,7 @@ import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
+import net.minecraftforge.items.*;
 
 import org.apache.logging.log4j.*;
 
@@ -26,6 +31,7 @@ import com.google.common.base.Throwables;
 
 import invtweaks.gui.*;
 import invtweaks.packets.*;
+import it.unimi.dsi.fastutil.objects.*;
 
 import java.lang.reflect.*;
 import java.util.*;
@@ -134,7 +140,7 @@ public class InvTweaksMod {
 	public static final int MIN_SLOTS = 9;
 	
 	public static @Nullable Slot getButtonPlacement(Collection<Slot> slots, Predicate<Slot> filter) {
-		if (slots.size() < MIN_SLOTS) {
+		if (slots.stream().filter(filter).count() < MIN_SLOTS) {
 			return null;
 		}
 		// pick the rightmost slot first, then the bottommost in case of a tie
@@ -142,6 +148,50 @@ public class InvTweaksMod {
 		return slots.stream().filter(filter).max(
 				Comparator.<Slot>comparingDouble(s -> s.xPos)
 				.thenComparingDouble(s -> s.yPos)).orElse(null);
+	}
+	
+	Map<PlayerEntity, EnumMap<Hand, Item>> itemsCache = new WeakHashMap<>();
+	Map<PlayerEntity, Object2IntMap<Item>> usedCache = new WeakHashMap<>();
+	
+	@SubscribeEvent
+	public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+		if (event.side == LogicalSide.SERVER) {
+			EnumMap<Hand, Item> cached = itemsCache.computeIfAbsent(event.player, k -> new EnumMap<>(Hand.class));
+			Object2IntMap<Item> ucached = usedCache.computeIfAbsent(event.player, k -> new Object2IntOpenHashMap<>());
+			for (Hand hand: Hand.values()) {
+				if (cached.get(hand) != null
+						&& event.player.getHeldItem(hand).isEmpty()
+						&& ((ServerPlayerEntity)event.player).getStats().getValue(
+								Stats.ITEM_USED.get(cached.get(hand)))
+						> ucached.getOrDefault(cached.get(hand), Integer.MAX_VALUE)) {
+					//System.out.println("Item depleted");
+					searchForSubstitute(event.player, hand, cached.get(hand));
+				}
+				ItemStack held = event.player.getHeldItem(hand);
+				cached.put(hand, held.isEmpty() ? null : held.getItem());
+				if (!held.isEmpty()) {
+					ucached.put(held.getItem(),
+							((ServerPlayerEntity)event.player).getStats().getValue(
+									Stats.ITEM_USED.get(held.getItem())));
+				}
+			}
+		}
+	}
+	
+	private void searchForSubstitute(PlayerEntity ent, Hand hand, Item item) {
+		// thank Simon for the flattening
+		ent.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP).ifPresent(cap -> {
+			for (int i=0; i<cap.getSlots(); ++i) {
+				if (PlayerInventory.isHotbar(i)) {
+					continue;
+				}
+				ItemStack cand = cap.extractItem(i, Integer.MAX_VALUE, true).copy();
+				if (cand.getItem() == item) {
+					cap.extractItem(i, Integer.MAX_VALUE, false);
+					ent.setHeldItem(hand, cand);
+				}
+			}
+		});
 	}
 	
 	/*
