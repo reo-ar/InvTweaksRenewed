@@ -2,6 +2,8 @@ package invtweaks;
 
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.inventory.*;
+import net.minecraft.client.settings.*;
+import net.minecraft.client.util.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.*;
@@ -10,10 +12,12 @@ import net.minecraft.stats.*;
 import net.minecraft.util.*;
 import net.minecraftforge.api.distmarker.*;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.settings.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.*;
+import net.minecraftforge.fml.client.registry.*;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -27,8 +31,10 @@ import net.minecraftforge.fml.network.simple.SimpleChannel;
 import net.minecraftforge.items.*;
 
 import org.apache.logging.log4j.*;
+import org.lwjgl.glfw.*;
 
 import com.google.common.base.Throwables;
+import com.google.common.collect.*;
 
 import invtweaks.gui.*;
 import invtweaks.packets.*;
@@ -72,6 +78,8 @@ public class InvTweaksMod {
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 	
+	private static Map<String, KeyBinding> keyBindings;
+	
 	private void setup(final FMLCommonSetupEvent event) {
 		// if client doesn't have mod installed, that's fine
 		NET_INST = NetworkRegistry.newSimpleChannel(
@@ -79,6 +87,12 @@ public class InvTweaksMod {
 				() -> NET_VERS, NET_VERS::equals, s -> true);
 		NET_INST.registerMessage(0, PacketSortInv.class,
 				PacketSortInv::encode, PacketSortInv::new, PacketSortInv::handle);
+		DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
+			keyBindings = ImmutableMap.<String, KeyBinding>builder()
+					.put("sort_player", new KeyBinding("key.invtweaks_sort_player.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_BACKSLASH, "key.categories.invtweaks"))
+					.build();
+			for (KeyBinding kb: keyBindings.values()) ClientRegistry.registerKeyBinding(kb);
+		});
 	}
 	
 	private void doClientStuff(final FMLClientSetupEvent event) {
@@ -209,6 +223,17 @@ public class InvTweaksMod {
 				}
 			}
 		});
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	@SubscribeEvent
+	public void keyInput(GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
+		if (keyBindings.get("sort_player")
+				.isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))
+				&& event.getGui() instanceof ContainerScreen
+				&& !(event.getGui() instanceof CreativeScreen)) {
+			NET_INST.sendToServer(new PacketSortInv(true));
+		}
 	}
 	
 	/*
