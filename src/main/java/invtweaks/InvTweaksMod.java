@@ -1,5 +1,6 @@
 package invtweaks;
 
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.inventory.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.container.*;
@@ -72,10 +73,10 @@ public class InvTweaksMod {
 	}
 	
 	private void setup(final FMLCommonSetupEvent event) {
-		// some preinit code
+		// if client doesn't have mod installed, that's fine
 		NET_INST = NetworkRegistry.newSimpleChannel(
 				new ResourceLocation(MODID, CHANNEL),
-				() -> NET_VERS, NET_VERS::equals, NET_VERS::equals);
+				() -> NET_VERS, NET_VERS::equals, s -> true);
 		NET_INST.registerMessage(0, PacketSortInv.class,
 				PacketSortInv::encode, PacketSortInv::new, PacketSortInv::handle);
 	}
@@ -117,25 +118,36 @@ public class InvTweaksMod {
 	@SubscribeEvent
 	public void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
 		//LOGGER.log(Level.INFO, event.getGui().getClass());
-		if (event.getGui() instanceof ContainerScreen) {
+		if (event.getGui() instanceof ContainerScreen && !(event.getGui() instanceof CreativeScreen)) {
 			Slot placement = getButtonPlacement(
 					((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
 					slot -> slot.inventory instanceof PlayerInventory
 					&& !PlayerInventory.isHotbar(slot.getSlotIndex()));
-			int xPos = Integer.MIN_VALUE, yPos = Integer.MIN_VALUE;
-			if (placement != null && !(event.getGui() instanceof CreativeScreen)) {
-				xPos = placement.xPos;
-				yPos = placement.yPos;
-			}
-			if (xPos != Integer.MIN_VALUE && yPos != Integer.MIN_VALUE) {
+			if (placement != null) {
 				try {
 					event.addWidget(new InvTweaksButtonSort(
-							guiLeftF.getInt(event.getGui())+xPos+16,
-							guiTopF.getInt(event.getGui())+yPos,
+							guiLeftF.getInt(event.getGui())+placement.xPos+16,
+							guiTopF.getInt(event.getGui())+placement.yPos,
 							true));
 				} catch (Exception e) {
 					Throwables.throwIfUnchecked(e);
 					throw new RuntimeException(e);
+				}
+			}
+			if (!(event.getGui() instanceof DisplayEffectsScreen)) {
+				placement = getButtonPlacement(
+						((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
+						slot -> !(slot.inventory instanceof PlayerInventory));
+				if (placement != null) {
+					try {
+						event.addWidget(new InvTweaksButtonSort(
+								guiLeftF.getInt(event.getGui())+placement.xPos+16,
+								guiTopF.getInt(event.getGui())+placement.yPos,
+								false));
+					} catch (Exception e) {
+						Throwables.throwIfUnchecked(e);
+						throw new RuntimeException(e);
+					}
 				}
 			}
 		}
@@ -148,11 +160,11 @@ public class InvTweaksMod {
 		if (slots.stream().filter(filter).count() < MIN_SLOTS) {
 			return null;
 		}
-		// pick the rightmost slot first, then the bottommost in case of a tie
+		// pick the rightmost slot first, then the topmost in case of a tie
 		// TODO change button position algorithm?
 		return slots.stream().filter(filter).max(
-				Comparator.<Slot>comparingDouble(s -> s.xPos)
-				.thenComparingDouble(s -> s.yPos)).orElse(null);
+				Comparator.<Slot>comparingInt(s -> s.xPos)
+				.thenComparingInt(s -> -s.yPos)).orElse(null);
 	}
 	
 	Map<PlayerEntity, EnumMap<Hand, Item>> itemsCache = new WeakHashMap<>();
