@@ -1,6 +1,7 @@
 package invtweaks;
 
 import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.screen.*;
 import net.minecraft.client.gui.screen.inventory.*;
 import net.minecraft.client.settings.*;
 import net.minecraft.client.util.*;
@@ -90,6 +91,7 @@ public class InvTweaksMod {
 		DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
 			keyBindings = ImmutableMap.<String, KeyBinding>builder()
 					.put("sort_player", new KeyBinding("key.invtweaks_sort_player.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_BACKSLASH, "key.categories.invtweaks"))
+					.put("sort_inventory", new KeyBinding("key.invtweaks_sort_inventory.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "key.categories.invtweaks"))
 					.build();
 			for (KeyBinding kb: keyBindings.values()) ClientRegistry.registerKeyBinding(kb);
 		});
@@ -128,6 +130,8 @@ public class InvTweaksMod {
 	@OnlyIn(Dist.CLIENT)
 	private static final Field guiTopF = ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147009_r");
 	
+	private static final Set<Screen> screensWithExtSort = Collections.newSetFromMap(new WeakHashMap<>());
+	
 	@OnlyIn(Dist.CLIENT)
 	@SubscribeEvent
 	public void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
@@ -158,6 +162,7 @@ public class InvTweaksMod {
 								guiLeftF.getInt(event.getGui())+placement.xPos+16,
 								guiTopF.getInt(event.getGui())+placement.yPos,
 								false));
+						screensWithExtSort.add(event.getGui());
 					} catch (Exception e) {
 						Throwables.throwIfUnchecked(e);
 						throw new RuntimeException(e);
@@ -228,11 +233,16 @@ public class InvTweaksMod {
 	@OnlyIn(Dist.CLIENT)
 	@SubscribeEvent
 	public void keyInput(GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
-		if (keyBindings.get("sort_player")
-				.isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))
-				&& event.getGui() instanceof ContainerScreen
+		if (event.getGui() instanceof ContainerScreen
 				&& !(event.getGui() instanceof CreativeScreen)) {
-			NET_INST.sendToServer(new PacketSortInv(true));
+			if (keyBindings.get("sort_player")
+				.isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
+				NET_INST.sendToServer(new PacketSortInv(true));
+			}
+			if (screensWithExtSort.contains(event.getGui())
+					&& keyBindings.get("sort_inventory").isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
+				NET_INST.sendToServer(new PacketSortInv(false));
+			}
 		}
 	}
 	
