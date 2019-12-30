@@ -1,6 +1,5 @@
 package invtweaks;
 
-import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.inventory.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.container.*;
@@ -77,8 +76,8 @@ public class InvTweaksMod {
 		NET_INST = NetworkRegistry.newSimpleChannel(
 				new ResourceLocation(MODID, CHANNEL),
 				() -> NET_VERS, NET_VERS::equals, NET_VERS::equals);
-		NET_INST.registerMessage(0, PacketSortPlayerInv.class,
-				PacketSortPlayerInv::encode, PacketSortPlayerInv::new, PacketSortPlayerInv::handle);
+		NET_INST.registerMessage(0, PacketSortInv.class,
+				PacketSortInv::encode, PacketSortInv::new, PacketSortInv::handle);
 	}
 	
 	private void doClientStuff(final FMLClientSetupEvent event) {
@@ -132,7 +131,8 @@ public class InvTweaksMod {
 				try {
 					event.addWidget(new InvTweaksButtonSort(
 							guiLeftF.getInt(event.getGui())+xPos+16,
-							guiTopF.getInt(event.getGui())+yPos));
+							guiTopF.getInt(event.getGui())+yPos,
+							true));
 				} catch (Exception e) {
 					Throwables.throwIfUnchecked(e);
 					throw new RuntimeException(e);

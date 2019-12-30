@@ -1,17 +1,10 @@
 package invtweaks.gui;
 
-import java.lang.reflect.*;
-
-import com.google.common.base.Throwables;
-
 import invtweaks.*;
 import net.minecraft.client.*;
-import net.minecraft.client.gui.screen.inventory.*;
 import net.minecraft.client.gui.widget.button.*;
-import net.minecraft.item.*;
 import net.minecraft.util.*;
 import net.minecraftforge.fml.client.config.*;
-import net.minecraftforge.fml.common.*;
 
 public class InvTweaksButton extends GuiButtonExt {
 	private ResourceLocation tex;
