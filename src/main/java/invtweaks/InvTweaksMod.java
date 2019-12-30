@@ -79,8 +79,6 @@ public class InvTweaksMod {
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 	
-	private static Map<String, KeyBinding> keyBindings;
-	
 	private void setup(final FMLCommonSetupEvent event) {
 		// if client doesn't have mod installed, that's fine
 		NET_INST = NetworkRegistry.newSimpleChannel(
@@ -88,18 +86,16 @@ public class InvTweaksMod {
 				() -> NET_VERS, NET_VERS::equals, s -> true);
 		NET_INST.registerMessage(0, PacketSortInv.class,
 				PacketSortInv::encode, PacketSortInv::new, PacketSortInv::handle);
-		DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
-			keyBindings = ImmutableMap.<String, KeyBinding>builder()
-					.put("sort_player", new KeyBinding("key.invtweaks_sort_player.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_BACKSLASH, "key.categories.invtweaks"))
-					.put("sort_inventory", new KeyBinding("key.invtweaks_sort_inventory.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "key.categories.invtweaks"))
-					.build();
-			for (KeyBinding kb: keyBindings.values()) ClientRegistry.registerKeyBinding(kb);
-		});
 	}
 	
+	private static Map<String, KeyBinding> keyBindings;
+	
 	private void doClientStuff(final FMLClientSetupEvent event) {
-		// do something that can only be done on the client
-		//LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
+		keyBindings = ImmutableMap.<String, KeyBinding>builder()
+				.put("sort_player", new KeyBinding("key.invtweaks_sort_player.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_BACKSLASH, "key.categories.invtweaks"))
+				.put("sort_inventory", new KeyBinding("key.invtweaks_sort_inventory.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "key.categories.invtweaks"))
+				.build();
+		for (KeyBinding kb: keyBindings.values()) ClientRegistry.registerKeyBinding(kb);
 	}
 	
 	private void enqueueIMC(final InterModEnqueueEvent event) {

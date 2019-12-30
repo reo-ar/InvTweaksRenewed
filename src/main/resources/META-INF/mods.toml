@@ -8,7 +8,7 @@ modLoader="javafml" #mandatory
 # A version range to match for said mod loader - for regular FML @Mod it will be the forge version
 loaderVersion="[28,)" #mandatory (28 is current forge version)
 # A URL to refer people to when problems occur with this mod
-# issueTrackerURL="" #TODO add
+# issueTrackerURL="https://github.com/Landmaster/InvTweaksReborn/issues"
 # A list of mods - how many allowed here is determined by the individual mod loader
 [[mods]] #mandatory
 # The modid of the mod
@@ -18,21 +18,22 @@ version="${version}" #mandatory
  # A display name for the mod
 displayName="Inventory Tweaks Reborn" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>
-# updateJSONURL="http://myurl.me/" #TODO add
+# updateJSONURL="http://myurl.me/" #TODO add?
 # A URL for the "homepage" for this mod, displayed in the mod UI
-#displayURL="http://example.com/" #TODO add
+displayURL="https://github.com/Landmaster/InvTweaksReborn"
 # A file name (in the root of the mod JAR) containing a logo for display
-#logoFile="examplemod.png" #TODO add
+logoFile="logo.png"
 # A text field displayed in the mod UI
-#credits="Thanks for this example mod goes to Java" #TODO add
+credits="JimeoWan for being the original creator of this mod, and Kobata for maintaining it until 1.12.2"
 # A text field displayed in the mod UI
-#authors="Love, Cheese and small house plants" #TODO add
+authors="Landmaster (phuong0429)"
 # The description text for the mod (multi line!) (#mandatory)
 description='''
 Sick and tired of inventory clutter? Then this mod is for you!
+Customizable sorting + fast tool swaps
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
-[[dependencies.examplemod]] #optional
+[[dependencies.invtweaks]] #optional
     # the modid of the dependency
     modId="forge" #mandatory
     # Does this dependency have to exist - if not, ordering below must be specified
@@ -44,7 +45,7 @@ Sick and tired of inventory clutter? Then this mod is for you!
     # Side this dependency is applied on - BOTH, CLIENT or SERVER
     side="BOTH"
 # Here's another dependency
-[[dependencies.examplemod]]
+[[dependencies.invtweaks]]
     modId="minecraft"
     mandatory=true
     versionRange="[1.14.4]"
