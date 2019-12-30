@@ -1,5 +1,6 @@
 package invtweaks;
 
+import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.inventory.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.container.*;
@@ -108,26 +109,30 @@ public class InvTweaksMod {
 		server = null;
 	}
 	
+	@OnlyIn(Dist.CLIENT)
 	private static final Field guiLeftF = ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147003_i");
+	@OnlyIn(Dist.CLIENT)
 	private static final Field guiTopF = ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147009_r");
-	static {
-		guiLeftF.setAccessible(true);
-		guiTopF.setAccessible(true);
-	}
 	
 	@OnlyIn(Dist.CLIENT)
 	@SubscribeEvent
 	public void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
+		//LOGGER.log(Level.INFO, event.getGui().getClass());
 		if (event.getGui() instanceof ContainerScreen) {
 			Slot placement = getButtonPlacement(
 					((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
 					slot -> slot.inventory instanceof PlayerInventory
 					&& !PlayerInventory.isHotbar(slot.getSlotIndex()));
-			if (placement != null) {
+			int xPos = Integer.MIN_VALUE, yPos = Integer.MIN_VALUE;
+			if (placement != null && !(event.getGui() instanceof CreativeScreen)) {
+				xPos = placement.xPos;
+				yPos = placement.yPos;
+			}
+			if (xPos != Integer.MIN_VALUE && yPos != Integer.MIN_VALUE) {
 				try {
 					event.addWidget(new InvTweaksButtonSort(
-							guiLeftF.getInt(event.getGui())+placement.xPos+16,
-							guiTopF.getInt(event.getGui())+placement.yPos));
+							guiLeftF.getInt(event.getGui())+xPos+16,
+							guiTopF.getInt(event.getGui())+yPos));
 				} catch (Exception e) {
 					Throwables.throwIfUnchecked(e);
 					throw new RuntimeException(e);
