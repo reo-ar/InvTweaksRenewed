@@ -20,6 +20,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.*;
 import net.minecraftforge.fml.client.registry.*;
 import net.minecraftforge.fml.common.*;
+import net.minecraftforge.fml.config.*;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.InterModEnqueueEvent;
@@ -27,6 +28,7 @@ import net.minecraftforge.fml.event.lifecycle.InterModProcessEvent;
 import net.minecraftforge.fml.event.server.FMLServerAboutToStartEvent;
 import net.minecraftforge.fml.event.server.FMLServerStoppedEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.fml.loading.*;
 import net.minecraftforge.fml.network.NetworkRegistry;
 import net.minecraftforge.fml.network.simple.SimpleChannel;
 import net.minecraftforge.items.*;
@@ -37,6 +39,7 @@ import org.lwjgl.glfw.*;
 import com.google.common.base.Throwables;
 import com.google.common.collect.*;
 
+import invtweaks.config.*;
 import invtweaks.gui.*;
 import invtweaks.packets.*;
 import it.unimi.dsi.fastutil.objects.*;
@@ -51,8 +54,7 @@ import javax.annotation.*;
 @Mod(InvTweaksMod.MODID)
 public class InvTweaksMod {
 	// Directly reference a log4j logger.
-	@SuppressWarnings("unused")
-	private static final Logger LOGGER = LogManager.getLogger(InvTweaksMod.MODID.toUpperCase(Locale.US));
+	public static final Logger LOGGER = LogManager.getLogger(InvTweaksMod.MODID.toUpperCase(Locale.US));
 	
 	public static final String MODID = "invtweaks";
 	
@@ -66,6 +68,8 @@ public class InvTweaksMod {
 	private static MinecraftServer server;
 	
 	public InvTweaksMod() {
+		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, InvTweaksConfig.CONFIG);
+		
 		// Register the setup method for modloading
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
 		// Register the enqueueIMC method for modloading
@@ -77,6 +81,8 @@ public class InvTweaksMod {
 		
 		// Register ourselves for server and other game events we are interested in
 		MinecraftForge.EVENT_BUS.register(this);
+		
+		InvTweaksConfig.loadConfig(InvTweaksConfig.CONFIG, FMLPaths.CONFIGDIR.get().resolve("invtweaks-client.toml"));
 	}
 	
 	private void setup(final FMLCommonSetupEvent event) {
