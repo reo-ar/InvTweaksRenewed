@@ -31,39 +31,41 @@ public class InvTweaksConfig {
 	
 	private static ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
 	
+	public static final Map<String, Category> DEFAULT_CATS = ImmutableMap.<String, Category>builder()
+			.put("sword", new Category("/instanceof:net.minecraft.item.SwordItem"))
+			.put("axe", new Category("/instanceof:net.minecraft.item.AxeItem"))
+			.put("pickaxe", new Category("/instanceof:net.minecraft.item.PickaxeItem"))
+			.put("shovel", new Category("/instanceof:net.minecraft.item.ShovelItem"))
+			.put("acceptableFood", new Category(
+					String.format("/instanceof:net.minecraft.item.Food; !%s; !%s; !%s; !%s",
+							Items.ROTTEN_FLESH.getRegistryName(),
+							Items.SPIDER_EYE.getRegistryName(),
+							Items.POISONOUS_POTATO.getRegistryName(),
+							Items.PUFFERFISH.getRegistryName())
+					))
+			.put("torch", new Category(Items.TORCH.getRegistryName().toString()))
+			.put("cheapblocks", new Category("/tag:cobblestone", "/tag:dirt"))
+			.put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
+			.build();
+	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D1 sword", "D2 pickaxe", "D3-D9 /FROZEN", "A1-C9v /OTHER");
+	public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
+	
 	static {
 		ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 		
 		{
 			builder.comment("Sorting customization").push("sorting");
 			
-			Map<String, Category> defaultCats = ImmutableMap.<String, Category>builder()
-					.put("sword", new Category("/instanceof:net.minecraft.item.SwordItem"))
-					.put("axe", new Category("/instanceof:net.minecraft.item.AxeItem"))
-					.put("pickaxe", new Category("/instanceof:net.minecraft.item.PickaxeItem"))
-					.put("shovel", new Category("/instanceof:net.minecraft.item.ShovelItem"))
-					.put("acceptableFood", new Category(
-							String.format("/instanceof:net.minecraft.item.Food; !%s; !%s; !%s; !%s",
-									Items.ROTTEN_FLESH.getRegistryName(),
-									Items.SPIDER_EYE.getRegistryName(),
-									Items.POISONOUS_POTATO.getRegistryName(),
-									Items.PUFFERFISH.getRegistryName())
-							))
-					.put("torch", new Category(Items.TORCH.getRegistryName().toString()))
-					.put("cheapblocks", new Category("/tag:cobblestone", "/tag:dirt"))
-					.put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
-					.build();
-			
 			CATS = builder.comment("Categor(y/ies) for sorting").defineList(
 					"category",
-					defaultCats.entrySet().stream()
+					DEFAULT_CATS.entrySet().stream()
 					.map(ent -> ent.getValue().toConfig(ent.getKey())).collect(Collectors.toList()),
 					obj -> {
 						return obj instanceof UnmodifiableConfig;
 					});
 			
 			RULES = builder.comment("Rules for sorting").defineList("rules",
-					Arrays.asList("D1 sword", "D2 pickaxe", "D3-D9 /FROZEN", "A1-C9v /OTHER"),
+					DEFAULT_RAW_RULES,
 					obj -> obj instanceof String);
 			
 			builder.pop();
@@ -111,6 +113,12 @@ public class InvTweaksConfig {
 	}
 	public static void setPlayerRules(PlayerEntity ent, Ruleset ruleset) {
 		playerToRules.put(ent, ruleset);
+	}
+	public static Map<String, Category> getPlayerCats(PlayerEntity ent) {
+		return playerToCats.getOrDefault(ent, DEFAULT_CATS);
+	}
+	public static Ruleset getPlayerRules(PlayerEntity ent) {
+		return playerToRules.getOrDefault(ent, DEFAULT_RULES);
 	}
 	
 	public static class Category {
@@ -197,6 +205,9 @@ public class InvTweaksConfig {
 					InvTweaksMod.LOGGER.warn("Syntax error in rule: "+rule);
 				}
 			}
+		}
+		public Ruleset(String...rules) {
+			this(Arrays.asList(rules));
 		}
 	}
 }

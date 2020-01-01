@@ -2,10 +2,11 @@ package invtweaks.packets;
 
 import java.util.*;
 import java.util.function.*;
-import java.util.stream.*;
 
 import com.google.common.collect.*;
 
+import invtweaks.config.*;
+import invtweaks.util.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.*;
@@ -24,13 +25,15 @@ public class PacketSortInv {
 	
 	public void handle(Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			//System.out.println("Teehee!");
-			Comparator<ItemStack> cmp = Comparator.comparing(is -> is.getTranslationKey()); // TODO change comparator
 			if (isPlayer) {
+				Map<String, InvTweaksConfig.Category> cats = InvTweaksConfig.getPlayerCats(ctx.get().getSender());
+				InvTweaksConfig.Ruleset rules = InvTweaksConfig.getPlayerRules(ctx.get().getSender());
+				
 				PlayerInventory inv = ctx.get().getSender().inventory;
+				
 				List<ItemStack> sl = inv.mainInventory.subList(PlayerInventory.getHotbarSize(), inv.mainInventory.size());
-				List<ItemStack> stacks = new ArrayList<>(sl);
-				stacks.sort(cmp);
+				List<ItemStack> stacks = Utils.collated(sl);
+				stacks.sort(Comparator.comparing(ItemStack::getTranslationKey));
 				
 				ctx.get().getSender().getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP)
 				.ifPresent(cap -> {
@@ -50,10 +53,10 @@ public class PacketSortInv {
 							.filter(slot -> slot.canTakeStack(ctx.get().getSender()))
 							.iterator();
 					if (!validSlots.iterator().hasNext()) return;
-					List<ItemStack> stacks = Streams.stream(validSlots)
+					List<ItemStack> stacks = Utils.collated(() -> Streams.stream(validSlots)
 							.map(slot -> slot.getStack().copy())
-							.sorted(cmp)
-							.collect(Collectors.toCollection(ArrayList::new));
+							.iterator());
+					stacks.sort(Comparator.comparing(ItemStack::getTranslationKey));
 					
 					// TODO special handling for Nether Chests-esque mods?
 					ItemStackHandler stackBuffer = new ItemStackHandler(stacks.size());

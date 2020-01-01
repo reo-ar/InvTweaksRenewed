@@ -1,8 +1,14 @@
 package invtweaks.util;
 
+import java.util.*;
 import java.util.stream.*;
 
+import com.google.common.base.Equivalence;
+import com.google.common.collect.Streams;
+
 import it.unimi.dsi.fastutil.ints.*;
+import net.minecraft.item.*;
+import net.minecraftforge.items.*;
 
 public class Utils {
 	public static int gridToPlayerSlot(int row, int col) {
@@ -87,5 +93,32 @@ public class Utils {
 	
 	public static IntStream directedRangeInclusive(int start, int end) {
 		return IntStream.iterate(start, v -> (start > end ? v-1 : v+1)).limit(Math.abs(end - start) + 1);
+	}
+	
+	public static final Equivalence<ItemStack> STACKABLE = new Equivalence<ItemStack>() {
+
+		@Override
+		protected boolean doEquivalent(ItemStack a, ItemStack b) {
+			return ItemHandlerHelper.canItemStacksStack(a, b);
+		}
+
+		@Override
+		protected int doHash(ItemStack t) {
+			List<Object> objs = new ArrayList<>(2);
+			if (!t.isEmpty()) {
+				objs.add(t.getItem());
+				if (t.hasTag()) {
+					objs.add(t.getTag());
+				}
+			}
+			return Arrays.hashCode(objs.toArray());
+		}
+		
+	};
+	
+	public static List<ItemStack> collated(Iterable<ItemStack> iterable) {
+		Map<Equivalence.Wrapper<ItemStack>, List<ItemStack>> mapping = Streams.stream(iterable)
+				.collect(Collectors.groupingBy(st -> STACKABLE.wrap(st), LinkedHashMap::new, Collectors.toList()));
+		return mapping.values().stream().flatMap(ls -> ls.stream()).collect(Collectors.toList());
 	}
 }

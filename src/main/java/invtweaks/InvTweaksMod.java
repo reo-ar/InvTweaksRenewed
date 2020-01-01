@@ -1,5 +1,6 @@
 package invtweaks;
 
+import net.minecraft.client.*;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.*;
 import net.minecraft.client.gui.screen.inventory.*;
@@ -16,6 +17,7 @@ import net.minecraftforge.client.event.*;
 import net.minecraftforge.client.settings.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.*;
+import net.minecraftforge.event.entity.*;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.*;
 import net.minecraftforge.fml.client.registry.*;
@@ -220,6 +222,17 @@ public class InvTweaksMod {
 				NET_INST.sendToServer(InvTweaksConfig.getSyncPacket());
 				InvTweaksConfig.setDirty(false);
 			}
+		}
+	}
+	
+	@SubscribeEvent
+	public void onEntityJoin(EntityJoinWorldEvent event) {
+		if (event.getWorld().isRemote) {
+			DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
+				if (event.getEntity() == Minecraft.getInstance().player) {
+					InvTweaksConfig.setDirty(true);
+				}
+			});
 		}
 	}
 	

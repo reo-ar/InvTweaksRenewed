@@ -5,6 +5,7 @@ import java.util.function.*;
 
 import com.electronwill.nightconfig.core.*;
 
+import invtweaks.*;
 import invtweaks.config.*;
 import net.minecraft.network.*;
 import net.minecraftforge.fml.network.*;
@@ -52,7 +53,7 @@ public class PacketUpdateConfig {
 			InvTweaksConfig.setPlayerCats(ctx.get().getSender(), catsMap);
 			InvTweaksConfig.setPlayerRules(ctx.get().getSender(), new InvTweaksConfig.Ruleset(rules));
 			
-			//InvTweaksMod.LOGGER.info("Received config from client!");
+			InvTweaksMod.LOGGER.info("Received config from client!"); // TODO remove in production
 		});
 	}
 	
