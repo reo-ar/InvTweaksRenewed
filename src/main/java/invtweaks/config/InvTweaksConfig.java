@@ -136,20 +136,20 @@ public class InvTweaksConfig {
 		spec.setConfig(configData);
 	}
 	
-	private static final Map<PlayerEntity, Map<String, Category>> playerToCats = new WeakHashMap<>();
-	private static final Map<PlayerEntity, Ruleset> playerToRules = new WeakHashMap<>();
+	private static final Map<UUID, Map<String, Category>> playerToCats = new HashMap<>();
+	private static final Map<UUID, Ruleset> playerToRules = new HashMap<>();
 	
 	public static void setPlayerCats(PlayerEntity ent, Map<String, Category> cats) {
-		playerToCats.put(ent, cats);
+		playerToCats.put(ent.getUniqueID(), cats);
 	}
 	public static void setPlayerRules(PlayerEntity ent, Ruleset ruleset) {
-		playerToRules.put(ent, ruleset);
+		playerToRules.put(ent.getUniqueID(), ruleset);
 	}
 	public static Map<String, Category> getPlayerCats(PlayerEntity ent) {
-		return playerToCats.getOrDefault(ent, DEFAULT_CATS);
+		return playerToCats.getOrDefault(ent.getUniqueID(), DEFAULT_CATS);
 	}
 	public static Ruleset getPlayerRules(PlayerEntity ent) {
-		return playerToRules.getOrDefault(ent, DEFAULT_RULES);
+		return playerToRules.getOrDefault(ent.getUniqueID(), DEFAULT_RULES);
 	}
 	
 	public static class Category {

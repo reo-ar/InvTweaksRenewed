@@ -52,7 +52,7 @@ public class Utils {
 				try {
 					int row = gridRowToInt(str);
 					if (global) return gridSpecToSlots("A1-D9", false);
-					return IntStream.range(0, 8)
+					return IntStream.rangeClosed(0, 8)
 							.map(col -> gridToPlayerSlot(row, col))
 							.toArray();
 				} catch (IllegalArgumentException e) {
