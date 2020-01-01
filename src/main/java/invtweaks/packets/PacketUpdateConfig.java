@@ -41,16 +41,7 @@ public class PacketUpdateConfig {
 	
 	public void handle(Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			Map<String, InvTweaksConfig.Category> catsMap = new LinkedHashMap<>();
-			for (UnmodifiableConfig subCfg: cats) {
-				String name = subCfg.getOrElse("name", "");
-				if (!name.equals("") && !name.startsWith("/")) {
-					catsMap.put(name,
-							new InvTweaksConfig.Category(subCfg.getOrElse("spec", Collections.<String>emptyList())
-									));
-				}
-			}
-			InvTweaksConfig.setPlayerCats(ctx.get().getSender(), catsMap);
+			InvTweaksConfig.setPlayerCats(ctx.get().getSender(), InvTweaksConfig.cfgToCompiledCats(cats));
 			InvTweaksConfig.setPlayerRules(ctx.get().getSender(), new InvTweaksConfig.Ruleset(rules));
 			
 			//InvTweaksMod.LOGGER.info("Received config from client!");

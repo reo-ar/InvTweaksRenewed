@@ -53,6 +53,7 @@ import it.unimi.dsi.fastutil.objects.*;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import javax.annotation.*;
 
@@ -291,6 +292,17 @@ public class InvTweaksMod {
 	public void renderOverlay(RenderGameOverlayEvent.Post event) {
 		if (event.getType() == ElementType.HOTBAR) {
 			PlayerEntity ent = Minecraft.getInstance().player;
+			
+			InvTweaksConfig.Ruleset rules = InvTweaksConfig.getSelfCompiledRules();
+			IntList frozen = Optional.ofNullable(rules.catToInventorySlots("/FROZEN"))
+					.map(IntArrayList::new) // prevent modification
+					.orElseGet(IntArrayList::new);
+			frozen.sort(null);
+			
+			if (Collections.binarySearch(frozen, ent.inventory.currentItem) >= 0) {
+				return;
+			}
+			
 			HandSide dominantHand = ent.getPrimaryHand();
 			int i = Minecraft.getInstance().mainWindow.getScaledWidth() / 2;
 			int i2 = Minecraft.getInstance().mainWindow.getScaledHeight() - 16 - 3;
@@ -300,7 +312,9 @@ public class InvTweaksMod {
 			} else {
 				iprime = i - 91 - 26;
 			}
-			int itemCount = ent.inventory.mainInventory.stream()
+			int itemCount = IntStream.range(0, ent.inventory.mainInventory.size())
+					.filter(idx -> Collections.binarySearch(frozen, idx) < 0)
+					.mapToObj(idx -> ent.inventory.mainInventory.get(idx))
 					.filter(st -> ItemHandlerHelper.canItemStacksStack(st, ent.getHeldItemMainhand()))
 					.mapToInt(st -> st.getCount())
 					.sum();

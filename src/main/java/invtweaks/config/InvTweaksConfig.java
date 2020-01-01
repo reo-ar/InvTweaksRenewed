@@ -50,6 +50,10 @@ public class InvTweaksConfig {
 	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
 	public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
 	
+	@SuppressWarnings("unused")
+	private static Map<String, Category> COMPILED_CATS = DEFAULT_CATS;
+	private static Ruleset COMPILED_RULES = DEFAULT_RULES;
+	
 	static {
 		ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 		
@@ -123,7 +127,18 @@ public class InvTweaksConfig {
 	}
 	
 	public static boolean isDirty() { return isDirty; }
-	public static void setDirty(boolean newVal) { isDirty = newVal; }
+	@SuppressWarnings("unchecked")
+	public static void setDirty(boolean newVal) {
+		isDirty = newVal;
+		if (isDirty) {
+			COMPILED_CATS = cfgToCompiledCats((List<UnmodifiableConfig>)CATS.get());
+			COMPILED_RULES = new Ruleset((List<String>)RULES.get());
+		}
+	}
+	
+	public static Ruleset getSelfCompiledRules() {
+		return COMPILED_RULES;
+	}
 	
 	public static void loadConfig(ForgeConfigSpec spec, Path path) {
 		final CommentedFileConfig configData = CommentedFileConfig.builder(path)
@@ -150,6 +165,19 @@ public class InvTweaksConfig {
 	}
 	public static Ruleset getPlayerRules(PlayerEntity ent) {
 		return playerToRules.getOrDefault(ent.getUniqueID(), DEFAULT_RULES);
+	}
+	
+	public static Map<String, Category> cfgToCompiledCats(List<UnmodifiableConfig> lst) {
+		Map<String, Category> catsMap = new LinkedHashMap<>();
+		for (UnmodifiableConfig subCfg: lst) {
+			String name = subCfg.getOrElse("name", "");
+			if (!name.equals("") && !name.startsWith("/")) {
+				catsMap.put(name,
+						new InvTweaksConfig.Category(subCfg.getOrElse("spec", Collections.<String>emptyList())
+								));
+			}
+		}
+		return catsMap;
 	}
 	
 	public static class Category {
