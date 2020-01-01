@@ -243,11 +243,15 @@ public class InvTweaksMod {
 				.orElseGet(IntArrayList::new);
 		frozen.sort(null);
 		
+		if (Collections.binarySearch(frozen, ent.inventory.currentItem) >= 0) {
+			return; // ignore frozen slot
+		}
+		
 		// thank Simon for the flattening
 		ent.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP).ifPresent(cap -> {
 			for (int i=0; i<cap.getSlots(); ++i) {
 				if (Collections.binarySearch(frozen, i) >= 0) {
-					continue;
+					continue; // ignore frozen slot
 				}
 				ItemStack cand = cap.extractItem(i, Integer.MAX_VALUE, true).copy();
 				if (cand.getItem() == item) {

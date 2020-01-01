@@ -47,7 +47,7 @@ public class InvTweaksConfig {
 			.put("cheapBlocks", new Category("/tag:cobblestone", "/tag:dirt"))
 			.put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
 			.build();
-	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /FROZEN", "A1-C9 /OTHER");
+	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
 	public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
 	
 	static {
@@ -56,7 +56,21 @@ public class InvTweaksConfig {
 		{
 			builder.comment("Sorting customization").push("sorting");
 			
-			CATS = builder.comment("Categor(y/ies) for sorting").defineList(
+			CATS = builder.comment(
+					"Categor(y/ies) for sorting",
+					"",
+					"name: the name of the category",
+					"",
+					"spec:",
+					"Each element denotes a series of semicolon-separated clauses",
+					"Items need to match all clauses of at least one element",
+					"Items matching earlier elements are earlier in order",
+					"A clause of the form /tag:<tag_value> matches a tag",
+					"Clauses /instanceof:<fully_qualified_name> or /class:<fully_qualified_name> check if item is",
+					"instance of class or exactly of that class respectively",
+					"Specifying an item's registry name as a clause checks for that item",
+					"Prepending an exclamation mark at the start of a clause inverts it"
+					).defineList(
 					"category",
 					DEFAULT_CATS.entrySet().stream()
 					.map(ent -> ent.getValue().toConfig(ent.getKey())).collect(Collectors.toList()),
@@ -64,7 +78,24 @@ public class InvTweaksConfig {
 						return obj instanceof UnmodifiableConfig;
 					});
 			
-			RULES = builder.comment("Rules for sorting").defineList("rules",
+			RULES = builder.comment(
+					"Rules for sorting",
+					"Each element is of the form <POS> <CATEGORY>",
+					"A-D is the row from top to bottom",
+					"1-9 is the column from left to right",
+					"POS denotes the target slots",
+					"Exs. POS = D3 means 3rd slot of hotbar",
+					"     POS = B means 2nd row, left to right",
+					"     POS = 9 means 9th column, bottom to top",
+					"     POS = A1-C9 means slots A1,A2,…,A9,B1,…,B9,C1,…,C9",
+					"     POS = A9-C1 means slots A9,A8,…,A1,B9,…,B1,C9,…,C1",
+					"Append v to POS of the form A1-C9 to move in columns instead of rows",
+					"Append r to POS of the form B or 9 to reverse slot order",
+					"CATEGORY is the item category to designate the slots to",
+					"CATEGORY = /LOCKED prevents slots from moving in sorting",
+					"CATEGORY = /FROZEN has the effect of /LOCKED and, in addition, ignores slot in auto-refill",
+					"CATEGORY = /OTHER covers all remaining items after other rules are exhausted"
+					).defineList("rules",
 					DEFAULT_RAW_RULES,
 					obj -> obj instanceof String);
 			
