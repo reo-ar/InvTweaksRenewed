@@ -2,18 +2,18 @@ package invtweaks.packets;
 
 import java.util.*;
 import java.util.function.*;
+import java.util.stream.*;
 
 import com.google.common.collect.*;
 
 import invtweaks.config.*;
 import invtweaks.util.*;
+import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.*;
 import net.minecraft.network.*;
-import net.minecraft.util.*;
 import net.minecraftforge.fml.network.*;
-import net.minecraftforge.items.*;
 
 public class PacketSortInv {
 	private boolean isPlayer;
@@ -23,27 +23,100 @@ public class PacketSortInv {
 		this(buf.readBoolean());
 	}
 	
+	private void playerInvHelper(
+			String catName,
+			InvTweaksConfig.Ruleset rules,
+			Map<String, List<ItemStack>> stacksByCat,
+			IntList lockedSlots,
+			PlayerInventory inv
+			) {
+		IntList lst = rules.catToInventorySlots(catName);
+		if (lst != null) {
+			List<ItemStack> queue = stacksByCat.get(catName);
+			for (int idx: lst) {
+				if (Collections.binarySearch(lockedSlots, idx) >= 0) {
+					continue;
+				}
+				if (queue.isEmpty()) {
+					break;
+				}
+				if (inv.mainInventory.get(idx).isEmpty()) {
+					inv.mainInventory.set(idx, queue.remove(0));
+				}
+			}
+		}
+	}
+	
 	public void handle(Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
 			if (isPlayer) {
 				Map<String, InvTweaksConfig.Category> cats = InvTweaksConfig.getPlayerCats(ctx.get().getSender());
 				InvTweaksConfig.Ruleset rules = InvTweaksConfig.getPlayerRules(ctx.get().getSender());
+				IntList lockedSlots = Optional.ofNullable(rules.catToInventorySlots("/LOCKED"))
+						.orElseGet(IntArrayList::new);
+				lockedSlots.addAll(Optional.ofNullable(rules.catToInventorySlots("/FROZEN"))
+						.orElseGet(IntArrayList::new));
+				lockedSlots.sort(null);
 				
 				PlayerInventory inv = ctx.get().getSender().inventory;
 				
-				List<ItemStack> sl = inv.mainInventory.subList(PlayerInventory.getHotbarSize(), inv.mainInventory.size());
-				List<ItemStack> stacks = Utils.collated(sl);
-				stacks.sort(Comparator.comparing(ItemStack::getTranslationKey));
+				List<ItemStack> stacks = Utils.condensed(() -> IntStream.range(0, inv.mainInventory.size())
+						.filter(idx -> Collections.binarySearch(lockedSlots, idx) < 0)
+						.mapToObj(idx -> inv.mainInventory.get(idx))
+						.filter(st -> !st.isEmpty())
+						.iterator());
+				stacks.sort(Utils.FALLBACK_COMPARATOR);
 				
-				ctx.get().getSender().getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP)
-				.ifPresent(cap -> {
-					Collections.fill(sl, ItemStack.EMPTY);
-					
-					int index = PlayerInventory.getHotbarSize();
-					for (ItemStack stack: stacks) {
-						while (!(stack = cap.insertItem(index, stack, false)).isEmpty()) { ++index; }
+				Map<String, List<ItemStack>> stacksByCat = stacks.stream()
+						.filter(st -> !st.isEmpty())
+						.collect(Collectors.groupingBy(st -> {
+							for (Map.Entry<String, InvTweaksConfig.Category> ent: cats.entrySet()) {
+								if (ent.getValue().checkStack(st) >= 0) {
+									return ent.getKey();
+								}
+							}
+							return "/OTHER";
+						}));
+				stacksByCat.forEach((k,v) -> {
+					if (!k.equals("/OTHER")) {
+						v.sort(Comparator.comparingInt(s -> cats.get(k).checkStack(s)));
 					}
 				});
+				
+				for (int i=0; i<inv.mainInventory.size(); ++i) {
+					if (Collections.binarySearch(lockedSlots, i) < 0) {
+						inv.mainInventory.set(i, ItemStack.EMPTY);
+					}
+				}
+				
+				// deal with the fixed categories first
+				for (String k: cats.keySet()) {
+					if (stacksByCat.containsKey(k)) {
+						playerInvHelper(k, rules, stacksByCat, lockedSlots, inv);
+					}
+				}
+				
+				List<ItemStack> remaining = stacksByCat.values().stream()
+						.flatMap(List::stream)
+						.collect(Collectors.toList());
+				remaining.sort(Utils.FALLBACK_COMPARATOR);
+				
+				Iterable<Integer> toIter = () -> Stream.concat(
+						Streams.stream(Optional.ofNullable(rules.catToInventorySlots("/OTHER")))
+						.flatMap(List::stream),
+						rules.fallbackInventoryRules().stream()
+						).iterator();
+				for (int idx: toIter) {
+					if (Collections.binarySearch(lockedSlots, idx) >= 0) {
+						continue;
+					}
+					if (remaining.isEmpty()) {
+						break;
+					}
+					if (inv.mainInventory.get(idx).isEmpty()) {
+						inv.mainInventory.set(idx, remaining.remove(0));
+					}
+				}
 			} else {
 				Container cont = ctx.get().getSender().openContainer;
 				// check if an inventory is open
@@ -53,22 +126,16 @@ public class PacketSortInv {
 							.filter(slot -> slot.canTakeStack(ctx.get().getSender()))
 							.iterator();
 					if (!validSlots.iterator().hasNext()) return;
-					List<ItemStack> stacks = Utils.collated(() -> Streams.stream(validSlots)
-							.map(slot -> slot.getStack().copy())
+					List<ItemStack> stacks = Utils.condensed(() -> Streams.stream(validSlots)
+							.map(slot -> slot.getStack())
+							.filter(st -> !st.isEmpty())
 							.iterator());
-					stacks.sort(Comparator.comparing(ItemStack::getTranslationKey));
-					
-					// TODO special handling for Nether Chests-esque mods?
-					ItemStackHandler stackBuffer = new ItemStackHandler(stacks.size());
-					int index = 0;
-					for (ItemStack stack: stacks) {
-						while (!(stack = stackBuffer.insertItem(index, stack, false)).isEmpty()) { ++index; }
-					}
+					stacks.sort(Utils.FALLBACK_COMPARATOR);
 					
 					Iterator<Slot> slotIt = validSlots.iterator();
-					for (int i=0; i<stackBuffer.getSlots() && !stackBuffer.getStackInSlot(i).isEmpty(); ++i) {
+					for (int i=0; i<stacks.size(); ++i) {
 						while (slotIt.hasNext()
-								&& !slotIt.next().isItemValid(stackBuffer.getStackInSlot(i))) {
+								&& !slotIt.next().isItemValid(stacks.get(i))) {
 							// do nothing
 						}
 						if (!slotIt.hasNext()) {
@@ -79,13 +146,14 @@ public class PacketSortInv {
 					// sort can be done, execute it
 					validSlots.forEach(slot -> slot.putStack(ItemStack.EMPTY));
 					slotIt = validSlots.iterator();
-					for (int i=0; i<stackBuffer.getSlots() && !stackBuffer.getStackInSlot(i).isEmpty(); ++i) {
+					for (int i=0; i<stacks.size(); ++i) {
+						//System.out.println(i);
 						Slot cur = null;
 						while (slotIt.hasNext()
-								&& !(cur = slotIt.next()).isItemValid(stackBuffer.getStackInSlot(i))) {
+								&& !(cur = slotIt.next()).isItemValid(stacks.get(i))) {
 							// do nothing
 						}
-						cur.putStack(stackBuffer.getStackInSlot(i));
+						cur.putStack(stacks.get(i));
 					}
 				}
 			}

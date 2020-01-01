@@ -5,7 +5,6 @@ import java.util.function.*;
 
 import com.electronwill.nightconfig.core.*;
 
-import invtweaks.*;
 import invtweaks.config.*;
 import net.minecraft.network.*;
 import net.minecraftforge.fml.network.*;
@@ -44,8 +43,9 @@ public class PacketUpdateConfig {
 		ctx.get().enqueueWork(() -> {
 			Map<String, InvTweaksConfig.Category> catsMap = new LinkedHashMap<>();
 			for (UnmodifiableConfig subCfg: cats) {
-				if (!subCfg.getOrElse("name", "").equals("")) {
-					catsMap.put(subCfg.get("name"),
+				String name = subCfg.getOrElse("name", "");
+				if (!name.equals("") && !name.startsWith("/")) {
+					catsMap.put(name,
 							new InvTweaksConfig.Category(subCfg.getOrElse("spec", Collections.<String>emptyList())
 									));
 				}
@@ -53,7 +53,7 @@ public class PacketUpdateConfig {
 			InvTweaksConfig.setPlayerCats(ctx.get().getSender(), catsMap);
 			InvTweaksConfig.setPlayerRules(ctx.get().getSender(), new InvTweaksConfig.Ruleset(rules));
 			
-			InvTweaksMod.LOGGER.info("Received config from client!"); // TODO remove in production
+			//InvTweaksMod.LOGGER.info("Received config from client!");
 		});
 	}
 	

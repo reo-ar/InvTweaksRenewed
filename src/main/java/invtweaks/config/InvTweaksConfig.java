@@ -44,7 +44,7 @@ public class InvTweaksConfig {
 							Items.PUFFERFISH.getRegistryName())
 					))
 			.put("torch", new Category(Items.TORCH.getRegistryName().toString()))
-			.put("cheapblocks", new Category("/tag:cobblestone", "/tag:dirt"))
+			.put("cheapBlocks", new Category("/tag:cobblestone", "/tag:dirt"))
 			.put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
 			.build();
 	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D1 sword", "D2 pickaxe", "D3-D9 /FROZEN", "A1-C9v /OTHER");
@@ -189,6 +189,7 @@ public class InvTweaksConfig {
 		@SuppressWarnings("unused")
 		private final List<String> rules;
 		private final Map<String, IntList> compiledRules = new LinkedHashMap<>();
+		private final IntList compiledFallbackRules = new IntArrayList();
 		
 		public Ruleset(List<String> rules) {
 			this.rules = rules;
@@ -197,9 +198,15 @@ public class InvTweaksConfig {
 				if (parts.length == 2) {
 					try {
 						compiledRules.computeIfAbsent(parts[1], k -> new IntArrayList())
-						.addAll(IntArrayList.wrap(Utils.gridSpecToSlots(parts[0])));
+						.addAll(IntArrayList.wrap(Utils.gridSpecToSlots(parts[0], false)));
+						if (parts[1].equals("/OTHER")) {
+							compiledFallbackRules.clear();
+							compiledFallbackRules.addAll(
+									IntArrayList.wrap(Utils.gridSpecToSlots(parts[0], true)));
+						}
 					} catch (IllegalArgumentException e) {
 						InvTweaksMod.LOGGER.warn("Bad slot target: "+parts[0]);
+						//throw e;
 					}
 				} else {
 					InvTweaksMod.LOGGER.warn("Syntax error in rule: "+rule);
@@ -208,6 +215,14 @@ public class InvTweaksConfig {
 		}
 		public Ruleset(String...rules) {
 			this(Arrays.asList(rules));
+		}
+		
+		public IntList catToInventorySlots(String cat) {
+			return compiledRules.get(cat);
+		}
+		
+		public IntList fallbackInventoryRules() {
+			return compiledFallbackRules;
 		}
 	}
 }
