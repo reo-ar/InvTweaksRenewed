@@ -4,6 +4,7 @@ import net.minecraft.client.*;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.*;
 import net.minecraft.client.gui.screen.inventory.*;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.settings.*;
 import net.minecraft.client.util.*;
 import net.minecraft.entity.player.*;
@@ -14,6 +15,7 @@ import net.minecraft.stats.*;
 import net.minecraft.util.*;
 import net.minecraftforge.api.distmarker.*;
 import net.minecraftforge.client.event.*;
+import net.minecraftforge.client.event.RenderGameOverlayEvent.*;
 import net.minecraftforge.client.settings.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.*;
@@ -40,6 +42,7 @@ import org.lwjgl.glfw.*;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.*;
+import com.mojang.blaze3d.platform.*;
 
 import invtweaks.config.*;
 import invtweaks.gui.*;
@@ -274,6 +277,55 @@ public class InvTweaksMod {
 			if (screensWithExtSort.contains(event.getGui())
 					&& keyBindings.get("sort_inventory").isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
 				NET_INST.sendToServer(new PacketSortInv(false));
+			}
+		}
+	}
+	
+	private static final Method renderHotbarItemM = DistExecutor.callWhenOn(Dist.CLIENT,
+			() -> () -> ObfuscationReflectionHelper.findMethod(
+					IngameGui.class, "func_184044_a", int.class, int.class, float.class, PlayerEntity.class, ItemStack.class
+					));
+	
+	@OnlyIn(Dist.CLIENT)
+	@SubscribeEvent
+	public void renderOverlay(RenderGameOverlayEvent.Post event) {
+		if (event.getType() == ElementType.HOTBAR) {
+			PlayerEntity ent = Minecraft.getInstance().player;
+			HandSide dominantHand = ent.getPrimaryHand();
+			int i = Minecraft.getInstance().mainWindow.getScaledWidth() / 2;
+			int i2 = Minecraft.getInstance().mainWindow.getScaledHeight() - 16 - 3;
+			int iprime;
+			if (dominantHand == HandSide.RIGHT) {
+				iprime = i + 91 + 10;
+			} else {
+				iprime = i - 91 - 26;
+			}
+			int itemCount = ent.inventory.mainInventory.stream()
+					.filter(st -> ItemHandlerHelper.canItemStacksStack(st, ent.getHeldItemMainhand()))
+					.mapToInt(st -> st.getCount())
+					.sum();
+			if (itemCount > ent.getHeldItemMainhand().getCount()) {
+				ItemStack toRender = ent.getHeldItemMainhand().copy();
+				toRender.setCount(itemCount);
+				
+				GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+				GlStateManager.enableRescaleNormal();
+				GlStateManager.enableBlend();
+				GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+				RenderHelper.enableGUIStandardItemLighting();
+				
+				try {
+					renderHotbarItemM.invoke(
+							Minecraft.getInstance().ingameGUI,
+							iprime, i2, Minecraft.getInstance().getRenderPartialTicks(),
+							ent, toRender);
+				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					throw new RuntimeException(e);
+				} finally {
+					RenderHelper.disableStandardItemLighting();
+					GlStateManager.disableRescaleNormal();
+					GlStateManager.disableBlend();
+				}
 			}
 		}
 	}
