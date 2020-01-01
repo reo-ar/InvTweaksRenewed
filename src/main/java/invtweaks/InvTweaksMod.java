@@ -132,10 +132,10 @@ public class InvTweaksMod {
 		server = null;
 	}
 	
-	@OnlyIn(Dist.CLIENT)
-	private static final Field guiLeftF = ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147003_i");
-	@OnlyIn(Dist.CLIENT)
-	private static final Field guiTopF = ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147009_r");
+	private static final Field guiLeftF = DistExecutor.callWhenOn(Dist.CLIENT,
+			() -> () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147003_i"));
+	private static final Field guiTopF = DistExecutor.callWhenOn(Dist.CLIENT,
+			() -> () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147009_r"));
 	
 	private static final Set<Screen> screensWithExtSort = Collections.newSetFromMap(new WeakHashMap<>());
 	
