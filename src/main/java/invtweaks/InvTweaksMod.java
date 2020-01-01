@@ -44,6 +44,7 @@ import com.google.common.collect.*;
 import invtweaks.config.*;
 import invtweaks.gui.*;
 import invtweaks.packets.*;
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.*;
 
 import java.lang.reflect.*;
@@ -237,10 +238,15 @@ public class InvTweaksMod {
 	}
 	
 	private void searchForSubstitute(PlayerEntity ent, Hand hand, Item item) {
+		IntList frozen = Optional.ofNullable(InvTweaksConfig.getPlayerRules(ent).catToInventorySlots("/FROZEN"))
+				.map(IntArrayList::new) // prevent modification
+				.orElseGet(IntArrayList::new);
+		frozen.sort(null);
+		
 		// thank Simon for the flattening
 		ent.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.UP).ifPresent(cap -> {
 			for (int i=0; i<cap.getSlots(); ++i) {
-				if (PlayerInventory.isHotbar(i)) {
+				if (Collections.binarySearch(frozen, i) >= 0) {
 					continue;
 				}
 				ItemStack cand = cap.extractItem(i, Integer.MAX_VALUE, true).copy();

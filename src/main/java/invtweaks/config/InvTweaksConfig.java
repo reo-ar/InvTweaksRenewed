@@ -47,7 +47,7 @@ public class InvTweaksConfig {
 			.put("cheapBlocks", new Category("/tag:cobblestone", "/tag:dirt"))
 			.put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
 			.build();
-	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D1 sword", "D2 pickaxe", "D3-D9 /FROZEN", "A1-C9v /OTHER");
+	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /FROZEN", "A1-C9 /OTHER");
 	public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
 	
 	static {
@@ -189,7 +189,7 @@ public class InvTweaksConfig {
 		@SuppressWarnings("unused")
 		private final List<String> rules;
 		private final Map<String, IntList> compiledRules = new LinkedHashMap<>();
-		private final IntList compiledFallbackRules = new IntArrayList();
+		private final IntList compiledFallbackRules = new IntArrayList(Utils.gridSpecToSlots("A1-D9", false));
 		
 		public Ruleset(List<String> rules) {
 			this.rules = rules;
