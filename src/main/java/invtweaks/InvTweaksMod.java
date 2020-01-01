@@ -92,6 +92,8 @@ public class InvTweaksMod {
 				() -> NET_VERS, NET_VERS::equals, s -> true);
 		NET_INST.registerMessage(0, PacketSortInv.class,
 				PacketSortInv::encode, PacketSortInv::new, PacketSortInv::handle);
+		NET_INST.registerMessage(1, PacketUpdateConfig.class,
+				PacketUpdateConfig::encode, PacketUpdateConfig::new, PacketUpdateConfig::handle);
 	}
 	
 	private static Map<String, KeyBinding> keyBindings;
@@ -188,8 +190,8 @@ public class InvTweaksMod {
 				.thenComparingInt(s -> -s.yPos)).orElse(null);
 	}
 	
-	Map<PlayerEntity, EnumMap<Hand, Item>> itemsCache = new WeakHashMap<>();
-	Map<PlayerEntity, Object2IntMap<Item>> usedCache = new WeakHashMap<>();
+	private Map<PlayerEntity, EnumMap<Hand, Item>> itemsCache = new WeakHashMap<>();
+	private Map<PlayerEntity, Object2IntMap<Item>> usedCache = new WeakHashMap<>();
 	
 	@SubscribeEvent
 	public void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -212,6 +214,11 @@ public class InvTweaksMod {
 							((ServerPlayerEntity)event.player).getStats().getValue(
 									Stats.ITEM_USED.get(held.getItem())));
 				}
+			}
+		} else {
+			if (InvTweaksConfig.isDirty()) {
+				NET_INST.sendToServer(InvTweaksConfig.getSyncPacket());
+				InvTweaksConfig.setDirty(false);
 			}
 		}
 	}

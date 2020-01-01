@@ -7,10 +7,14 @@ import java.util.stream.*;
 
 import com.electronwill.nightconfig.core.*;
 import com.electronwill.nightconfig.core.file.*;
-import com.electronwill.nightconfig.core.io.*;
+import com.electronwill.nightconfig.core.io.WritingMode;
 import com.google.common.collect.*;
 
 import invtweaks.*;
+import invtweaks.packets.*;
+import invtweaks.util.*;
+import it.unimi.dsi.fastutil.ints.*;
+import net.minecraft.entity.player.*;
 import net.minecraft.item.*;
 import net.minecraft.tags.*;
 import net.minecraft.util.*;
@@ -19,14 +23,12 @@ import net.minecraftforge.eventbus.api.*;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.config.*;
 
-@Mod.EventBusSubscriber
+@Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)
 public class InvTweaksConfig {
 	public static final ForgeConfigSpec CONFIG;
 	
-	@SuppressWarnings("unused")
 	private static ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
 	
-	@SuppressWarnings("unused")
 	private static ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
 	
 	static {
@@ -60,7 +62,8 @@ public class InvTweaksConfig {
 						return obj instanceof UnmodifiableConfig;
 					});
 			
-			RULES = builder.comment("Rules for sorting").defineList("rules", Arrays.<String>asList(),
+			RULES = builder.comment("Rules for sorting").defineList("rules",
+					Arrays.asList("D1 sword", "D2 pickaxe", "D3-D9 /FROZEN", "A1-C9v /OTHER"),
 					obj -> obj instanceof String);
 			
 			builder.pop();
@@ -69,19 +72,25 @@ public class InvTweaksConfig {
 		CONFIG = builder.build();
 	}
 	
+	@SuppressWarnings("unchecked")
+	public static PacketUpdateConfig getSyncPacket() {
+		return new PacketUpdateConfig((List<UnmodifiableConfig>)CATS.get(), (List<String>)RULES.get());
+	}
+	
 	private static boolean isDirty = false;
 	
 	@SubscribeEvent
 	public static void onLoad(final ModConfig.Loading configEvent) {
-		isDirty = true;
+		setDirty(true);
 	}
 	
 	@SubscribeEvent
 	public static void onReload(final ModConfig.ConfigReloading configEvent) {
-		isDirty = true;
+		setDirty(true);
 	}
 	
 	public static boolean isDirty() { return isDirty; }
+	public static void setDirty(boolean newVal) { isDirty = newVal; }
 	
 	public static void loadConfig(ForgeConfigSpec spec, Path path) {
 		final CommentedFileConfig configData = CommentedFileConfig.builder(path)
@@ -92,6 +101,16 @@ public class InvTweaksConfig {
 		
 		configData.load();
 		spec.setConfig(configData);
+	}
+	
+	private static final Map<PlayerEntity, Map<String, Category>> playerToCats = new WeakHashMap<>();
+	private static final Map<PlayerEntity, Ruleset> playerToRules = new WeakHashMap<>();
+	
+	public static void setPlayerCats(PlayerEntity ent, Map<String, Category> cats) {
+		playerToCats.put(ent, cats);
+	}
+	public static void setPlayerRules(PlayerEntity ent, Ruleset ruleset) {
+		playerToRules.put(ent, ruleset);
 	}
 	
 	public static class Category {
@@ -155,6 +174,29 @@ public class InvTweaksConfig {
 			result.set("name", catName);
 			result.set("spec", spec);
 			return result;
+		}
+	}
+	
+	public static class Ruleset {
+		@SuppressWarnings("unused")
+		private final List<String> rules;
+		private final Map<String, IntList> compiledRules = new LinkedHashMap<>();
+		
+		public Ruleset(List<String> rules) {
+			this.rules = rules;
+			for (String rule: rules) {
+				String[] parts = rule.split("\\s+", 2);
+				if (parts.length == 2) {
+					try {
+						compiledRules.computeIfAbsent(parts[1], k -> new IntArrayList())
+						.addAll(IntArrayList.wrap(Utils.gridSpecToSlots(parts[0])));
+					} catch (IllegalArgumentException e) {
+						InvTweaksMod.LOGGER.warn("Bad slot target: "+parts[0]);
+					}
+				} else {
+					InvTweaksMod.LOGGER.warn("Syntax error in rule: "+rule);
+				}
+			}
 		}
 	}
 }
