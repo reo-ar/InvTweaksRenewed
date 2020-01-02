@@ -44,7 +44,7 @@ public class InvTweaksConfig {
 							Items.PUFFERFISH.getRegistryName())
 					))
 			.put("torch", new Category(Items.TORCH.getRegistryName().toString()))
-			.put("cheapBlocks", new Category("/tag:cobblestone", "/tag:dirt"))
+			.put("cheapBlocks", new Category("/tag:forge:cobblestone", "/tag:forge:dirt"))
 			.put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
 			.build();
 	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
@@ -204,9 +204,16 @@ public class InvTweaksConfig {
 			String[] parts = clause.split(":", 2);
 			if (parts[0].equals("/tag")) { // F to pay respects to oredict
 				return Optional.of(
-						st -> Optional.ofNullable(ItemTags.getCollection().get(new ResourceLocation(parts[1])))
-						.filter(tg -> tg.contains(st.getItem()))
-						.isPresent());
+						st -> (
+								Optional.ofNullable(ItemTags.getCollection().get(new ResourceLocation(parts[1])))
+								.filter(tg -> tg.contains(st.getItem()))
+								.isPresent()
+								||
+								(st.getItem() instanceof BlockItem
+										&& Optional.ofNullable(BlockTags.getCollection().get(new ResourceLocation(parts[1])))
+										.filter(tg -> tg.contains(((BlockItem)st.getItem()).getBlock()))
+										.isPresent())
+						));
 			} else if (parts[0].equals("/instanceof") || parts[0].equals("/class")) { // use this for e.g. pickaxes
 				try {
 					Class<?> clazz = Class.forName(parts[1]);

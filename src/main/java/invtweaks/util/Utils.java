@@ -158,5 +158,6 @@ public class Utils {
 				.collect(Collectors.toList());
 	}
 	
+	// TODO improve fallback comparator
 	public static final Comparator<ItemStack> FALLBACK_COMPARATOR = Comparator.comparing(is -> is.getItem().getRegistryName());
 }

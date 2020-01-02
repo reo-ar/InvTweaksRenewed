@@ -4,6 +4,8 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import org.apache.commons.lang3.tuple.*;
+
 import com.google.common.collect.*;
 
 import invtweaks.config.*;
@@ -23,40 +25,16 @@ public class PacketSortInv {
 		this(buf.readBoolean());
 	}
 	
-	private void playerInvHelper(
-			String catName,
-			InvTweaksConfig.Ruleset rules,
-			Map<String, List<ItemStack>> stacksByCat,
-			IntList lockedSlots,
-			PlayerInventory inv
-			) {
-		IntList lst = rules.catToInventorySlots(catName);
-		if (lst != null) {
-			List<ItemStack> queue = stacksByCat.get(catName);
-			for (int idx: lst) {
-				if (Collections.binarySearch(lockedSlots, idx) >= 0) {
-					continue;
-				}
-				if (queue.isEmpty()) {
-					break;
-				}
-				if (inv.mainInventory.get(idx).isEmpty()) {
-					inv.mainInventory.set(idx, queue.remove(0));
-				}
-			}
-		}
-	}
-	
 	public void handle(Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
 			if (isPlayer) {
 				Map<String, InvTweaksConfig.Category> cats = InvTweaksConfig.getPlayerCats(ctx.get().getSender());
 				InvTweaksConfig.Ruleset rules = InvTweaksConfig.getPlayerRules(ctx.get().getSender());
 				IntList lockedSlots = Optional.ofNullable(rules.catToInventorySlots("/LOCKED"))
-						.map(IntArrayList::new) // copy list to prevent modification
-						.orElseGet(IntArrayList::new);
+						.<IntList>map(IntArrayList::new) // copy list to prevent modification
+						.orElse(IntLists.EMPTY_LIST);
 				lockedSlots.addAll(Optional.ofNullable(rules.catToInventorySlots("/FROZEN"))
-						.orElseGet(IntArrayList::new));
+						.orElse(IntLists.EMPTY_LIST));
 				lockedSlots.sort(null);
 				
 				PlayerInventory inv = ctx.get().getSender().inventory;
@@ -67,22 +45,7 @@ public class PacketSortInv {
 						.filter(st -> !st.isEmpty())
 						.iterator());
 				stacks.sort(Utils.FALLBACK_COMPARATOR);
-				
-				Map<String, List<ItemStack>> stacksByCat = stacks.stream()
-						.filter(st -> !st.isEmpty())
-						.collect(Collectors.groupingBy(st -> {
-							for (Map.Entry<String, InvTweaksConfig.Category> ent: cats.entrySet()) {
-								if (ent.getValue().checkStack(st) >= 0) {
-									return ent.getKey();
-								}
-							}
-							return "/OTHER";
-						}));
-				stacksByCat.forEach((k,v) -> {
-					if (!k.equals("/OTHER")) {
-						v.sort(Comparator.comparingInt(s -> cats.get(k).checkStack(s)));
-					}
-				});
+				stacks = new LinkedList<>(stacks);
 				
 				for (int i=0; i<inv.mainInventory.size(); ++i) {
 					if (Collections.binarySearch(lockedSlots, i) < 0) {
@@ -90,17 +53,28 @@ public class PacketSortInv {
 					}
 				}
 				
-				// deal with the fixed categories first
-				for (String k: cats.keySet()) {
-					if (stacksByCat.containsKey(k)) {
-						playerInvHelper(k, rules, stacksByCat, lockedSlots, inv);
+				for (Map.Entry<String, InvTweaksConfig.Category> ent: cats.entrySet()) {
+					IntList specificRules = rules.catToInventorySlots(ent.getKey());
+					if (specificRules == null) specificRules = IntLists.EMPTY_LIST;
+					specificRules = specificRules.stream()
+							.filter(idx -> Collections.binarySearch(lockedSlots, idx) < 0)
+							.mapToInt(v -> v)
+							.collect(IntArrayList::new, IntList::add, IntList::addAll);
+					List<ItemStack> curStacks = new ArrayList<>();
+					Iterator<ItemStack> it = stacks.iterator();
+					while (it.hasNext() && curStacks.size() < specificRules.size()) {
+						ItemStack st = it.next();
+						if (ent.getValue().checkStack(st) >= 0) {
+							curStacks.add(st);
+							it.remove();
+						}
 					}
+					curStacks.sort(Comparator.comparingInt(s -> cats.get(ent.getKey()).checkStack(s)));
+					Streams.zip(specificRules.stream(), curStacks.stream(), Pair::of)
+					.forEach(pr -> {
+						inv.mainInventory.set(pr.getKey(), pr.getValue());
+					});
 				}
-				
-				List<ItemStack> remaining = stacksByCat.values().stream()
-						.flatMap(List::stream)
-						.collect(Collectors.toList());
-				remaining.sort(Utils.FALLBACK_COMPARATOR);
 				
 				Iterable<Integer> toIter = () -> Stream.concat(
 						Streams.stream(Optional.ofNullable(rules.catToInventorySlots("/OTHER")))
@@ -111,11 +85,11 @@ public class PacketSortInv {
 					if (Collections.binarySearch(lockedSlots, idx) >= 0) {
 						continue;
 					}
-					if (remaining.isEmpty()) {
+					if (stacks.isEmpty()) {
 						break;
 					}
 					if (inv.mainInventory.get(idx).isEmpty()) {
-						inv.mainInventory.set(idx, remaining.remove(0));
+						inv.mainInventory.set(idx, stacks.remove(0));
 					}
 				}
 			} else {
