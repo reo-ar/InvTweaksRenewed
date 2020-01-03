@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.*;
 import net.minecraft.client.settings.*;
 import net.minecraft.client.util.*;
 import net.minecraft.entity.player.*;
+import net.minecraft.inventory.*;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.*;
 import net.minecraft.server.MinecraftServer;
@@ -166,7 +167,7 @@ public class InvTweaksMod {
 			if (!(event.getGui() instanceof DisplayEffectsScreen)) {
 				placement = getButtonPlacement(
 						((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
-						slot -> !(slot.inventory instanceof PlayerInventory));
+						slot -> !(slot.inventory instanceof PlayerInventory || slot.inventory instanceof CraftingInventory));
 				if (placement != null) {
 					try {
 						event.addWidget(new InvTweaksButtonSort(
