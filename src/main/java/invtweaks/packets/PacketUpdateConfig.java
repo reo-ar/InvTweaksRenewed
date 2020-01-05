@@ -25,11 +25,11 @@ public class PacketUpdateConfig {
 		int catsSize = buf.readVarInt();
 		for (int i=0; i<catsSize; ++i) {
 			CommentedConfig subCfg = CommentedConfig.inMemory();
-			subCfg.set("name", buf.readString());
+			subCfg.set("name", buf.readString(32767));
 			List<String> spec = new ArrayList<>();
 			int specSize = buf.readVarInt();
 			for (int j=0; j<specSize; ++j) {
-				spec.add(buf.readString());
+				spec.add(buf.readString(32767));
 			}
 			subCfg.set("spec", spec);
 			cats.add(subCfg);
@@ -37,7 +37,7 @@ public class PacketUpdateConfig {
 		this.rules = new ArrayList<>();
 		int rulesSize = buf.readVarInt();
 		for (int i=0; i<rulesSize; ++i) {
-			rules.add(buf.readString());
+			rules.add(buf.readString(32767));
 		}
 		this.autoRefill = buf.readBoolean();
 	}
