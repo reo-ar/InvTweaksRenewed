@@ -18,8 +18,10 @@ import net.minecraft.entity.player.*;
 import net.minecraft.item.*;
 import net.minecraft.tags.*;
 import net.minecraft.util.*;
+import net.minecraft.util.concurrent.*;
 import net.minecraftforge.common.*;
 import net.minecraftforge.eventbus.api.*;
+import net.minecraftforge.fml.*;
 import net.minecraftforge.fml.common.*;
 import net.minecraftforge.fml.config.*;
 
@@ -136,12 +138,14 @@ public class InvTweaksConfig {
 	
 	@SubscribeEvent
 	public static void onLoad(final ModConfig.Loading configEvent) {
-		setDirty(true);
+		ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
+		executor.runAsync(() -> setDirty(true));
 	}
 	
 	@SubscribeEvent
 	public static void onReload(final ModConfig.ConfigReloading configEvent) {
-		setDirty(true);
+		ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
+		executor.runAsync(() -> setDirty(true));
 	}
 	
 	public static boolean isDirty() { return isDirty; }

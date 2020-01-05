@@ -51,3 +51,9 @@ Customizable sorting + fast tool swaps
     versionRange="[1.14.4]"
     ordering="NONE"
     side="BOTH"
+[[dependencies.invtweaks]]
+	modId="jei"
+	mandatory=false
+	versionRange="[1.14.4-6.0.0.25,)"
+	ordering="AFTER"
+	side="BOTH"

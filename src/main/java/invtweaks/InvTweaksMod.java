@@ -4,6 +4,7 @@ import net.minecraft.client.*;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.*;
 import net.minecraft.client.gui.screen.inventory.*;
+import net.minecraft.client.gui.widget.*;
 import net.minecraft.client.renderer.*;
 import net.minecraft.client.settings.*;
 import net.minecraft.client.util.*;
@@ -74,6 +75,14 @@ public class InvTweaksMod {
 	
 	@Nullable
 	private static MinecraftServer server;
+	
+	private static BooleanSupplier isJEIKeyboardActive = () -> false;
+	
+	public static void setJEIKeyboardActiveFn(BooleanSupplier query) {
+		isJEIKeyboardActive = query;
+	}
+	
+	public static boolean isJEIKeyboardActive() { return isJEIKeyboardActive.getAsBoolean(); }
 	
 	public InvTweaksMod() {
 		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, InvTweaksConfig.CONFIG);
@@ -277,7 +286,10 @@ public class InvTweaksMod {
 	@SubscribeEvent
 	public void keyInput(GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
 		if (event.getGui() instanceof ContainerScreen
-				&& !(event.getGui() instanceof CreativeScreen)) {
+				&& !(event.getGui() instanceof CreativeScreen)
+				&& !(event.getGui().getFocused() instanceof TextFieldWidget)
+				&& !isJEIKeyboardActive()) {
+			//System.out.println(event.getGui().getFocused());
 			if (InvTweaksConfig.isSortEnabled(true) && keyBindings.get("sort_player")
 				.isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
 				NET_INST.sendToServer(new PacketSortInv(true));
