@@ -12,11 +12,13 @@ import net.minecraftforge.fml.network.*;
 public class PacketUpdateConfig {
 	private final List<UnmodifiableConfig> cats;
 	private final List<String> rules;
+	private final boolean autoRefill;
 	
-	public PacketUpdateConfig() { this(Collections.emptyList(), Collections.emptyList()); }
-	public PacketUpdateConfig(List<UnmodifiableConfig> cats, List<String> rules) {
+	public PacketUpdateConfig() { this(Collections.emptyList(), Collections.emptyList(), false); }
+	public PacketUpdateConfig(List<UnmodifiableConfig> cats, List<String> rules, boolean autoRefill) {
 		this.cats = cats;
 		this.rules = rules;
+		this.autoRefill = autoRefill;
 	}
 	public PacketUpdateConfig(PacketBuffer buf) {
 		this.cats = new ArrayList<>();
@@ -37,12 +39,14 @@ public class PacketUpdateConfig {
 		for (int i=0; i<rulesSize; ++i) {
 			rules.add(buf.readString());
 		}
+		this.autoRefill = buf.readBoolean();
 	}
 	
 	public void handle(Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
 			InvTweaksConfig.setPlayerCats(ctx.get().getSender(), InvTweaksConfig.cfgToCompiledCats(cats));
 			InvTweaksConfig.setPlayerRules(ctx.get().getSender(), new InvTweaksConfig.Ruleset(rules));
+			InvTweaksConfig.setPlayerAutoRefill(ctx.get().getSender(), autoRefill);
 			
 			//InvTweaksMod.LOGGER.info("Received config from client!");
 		});
@@ -63,5 +67,6 @@ public class PacketUpdateConfig {
 		for (String subRule: rules) {
 			buf.writeString(subRule);
 		}
+		buf.writeBoolean(autoRefill);
 	}
 }

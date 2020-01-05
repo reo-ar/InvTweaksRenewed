@@ -31,6 +31,10 @@ public class InvTweaksConfig {
 	
 	private static ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
 	
+	private static ForgeConfigSpec.BooleanValue ENABLE_AUTOREFILL;
+	
+	private static ForgeConfigSpec.IntValue ENABLE_SORT;
+	
 	public static final Map<String, Category> DEFAULT_CATS = ImmutableMap.<String, Category>builder()
 			.put("sword", new Category("/instanceof:net.minecraft.item.SwordItem"))
 			.put("axe", new Category("/instanceof:net.minecraft.item.AxeItem"))
@@ -106,12 +110,26 @@ public class InvTweaksConfig {
 			builder.pop();
 		}
 		
+		{
+			builder.comment("Tweaks").push("tweaks");
+			
+			ENABLE_AUTOREFILL = builder.comment("Enable auto-refill").define("autoRefill", true);
+			ENABLE_SORT = builder.comment(
+					"0 = disable sorting",
+					"1 = player sorting only",
+					"2 = external sorting only",
+					"3 = all sorting enabled (default)"
+					).defineInRange("enableSort", 3, 0, 3);
+			
+			builder.pop();
+		}
+		
 		CONFIG = builder.build();
 	}
 	
 	@SuppressWarnings("unchecked")
 	public static PacketUpdateConfig getSyncPacket() {
-		return new PacketUpdateConfig((List<UnmodifiableConfig>)CATS.get(), (List<String>)RULES.get());
+		return new PacketUpdateConfig((List<UnmodifiableConfig>)CATS.get(), (List<String>)RULES.get(), ENABLE_AUTOREFILL.get());
 	}
 	
 	private static boolean isDirty = false;
@@ -153,6 +171,7 @@ public class InvTweaksConfig {
 	
 	private static final Map<UUID, Map<String, Category>> playerToCats = new HashMap<>();
 	private static final Map<UUID, Ruleset> playerToRules = new HashMap<>();
+	private static final Set<UUID> playerAutoRefill = new HashSet<>();
 	
 	public static void setPlayerCats(PlayerEntity ent, Map<String, Category> cats) {
 		playerToCats.put(ent.getUniqueID(), cats);
@@ -160,11 +179,25 @@ public class InvTweaksConfig {
 	public static void setPlayerRules(PlayerEntity ent, Ruleset ruleset) {
 		playerToRules.put(ent.getUniqueID(), ruleset);
 	}
+	public static void setPlayerAutoRefill(PlayerEntity ent, boolean autoRefill) {
+		if (autoRefill) {
+			playerAutoRefill.add(ent.getUniqueID());
+		} else {
+			playerAutoRefill.remove(ent.getUniqueID());
+		}
+	}
 	public static Map<String, Category> getPlayerCats(PlayerEntity ent) {
 		return playerToCats.getOrDefault(ent.getUniqueID(), DEFAULT_CATS);
 	}
 	public static Ruleset getPlayerRules(PlayerEntity ent) {
 		return playerToRules.getOrDefault(ent.getUniqueID(), DEFAULT_RULES);
+	}
+	public static boolean getPlayerAutoRefill(PlayerEntity ent) {
+		return playerAutoRefill.contains(ent.getUniqueID());
+	}
+	
+	public static boolean isSortEnabled(boolean isPlayerSort) {
+		return ENABLE_SORT.get() == 3 || ENABLE_SORT.get() == (isPlayerSort ? 1 : 2);
 	}
 	
 	public static Map<String, Category> cfgToCompiledCats(List<UnmodifiableConfig> lst) {

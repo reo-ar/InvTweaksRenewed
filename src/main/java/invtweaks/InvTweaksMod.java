@@ -153,7 +153,7 @@ public class InvTweaksMod {
 					((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
 					slot -> slot.inventory instanceof PlayerInventory
 					&& !PlayerInventory.isHotbar(slot.getSlotIndex()));
-			if (placement != null) {
+			if (placement != null && InvTweaksConfig.isSortEnabled(true)) {
 				try {
 					event.addWidget(new InvTweaksButtonSort(
 							guiLeftF.getInt(event.getGui())+placement.xPos+16,
@@ -168,7 +168,7 @@ public class InvTweaksMod {
 				placement = getButtonPlacement(
 						((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
 						slot -> !(slot.inventory instanceof PlayerInventory || slot.inventory instanceof CraftingInventory));
-				if (placement != null) {
+				if (placement != null && InvTweaksConfig.isSortEnabled(false)) {
 					try {
 						event.addWidget(new InvTweaksButtonSort(
 								guiLeftF.getInt(event.getGui())+placement.xPos+16,
@@ -204,6 +204,9 @@ public class InvTweaksMod {
 	@SubscribeEvent
 	public void onPlayerTick(TickEvent.PlayerTickEvent event) {
 		if (event.side == LogicalSide.SERVER) {
+			if (!InvTweaksConfig.getPlayerAutoRefill(event.player)) {
+				return;
+			}
 			EnumMap<Hand, Item> cached = itemsCache.computeIfAbsent(event.player, k -> new EnumMap<>(Hand.class));
 			Object2IntMap<Item> ucached = usedCache.computeIfAbsent(event.player, k -> new Object2IntOpenHashMap<>());
 			for (Hand hand: Hand.values()) {
@@ -272,11 +275,11 @@ public class InvTweaksMod {
 	public void keyInput(GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
 		if (event.getGui() instanceof ContainerScreen
 				&& !(event.getGui() instanceof CreativeScreen)) {
-			if (keyBindings.get("sort_player")
+			if (InvTweaksConfig.isSortEnabled(true) && keyBindings.get("sort_player")
 				.isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
 				NET_INST.sendToServer(new PacketSortInv(true));
 			}
-			if (screensWithExtSort.contains(event.getGui())
+			if (InvTweaksConfig.isSortEnabled(false) && screensWithExtSort.contains(event.getGui())
 					&& keyBindings.get("sort_inventory").isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
 				NET_INST.sendToServer(new PacketSortInv(false));
 			}
@@ -293,6 +296,9 @@ public class InvTweaksMod {
 	public void renderOverlay(RenderGameOverlayEvent.Post event) {
 		if (event.getType() == ElementType.HOTBAR) {
 			PlayerEntity ent = Minecraft.getInstance().player;
+			if (!InvTweaksConfig.getPlayerAutoRefill(ent)) {
+				return;
+			}
 			
 			InvTweaksConfig.Ruleset rules = InvTweaksConfig.getSelfCompiledRules();
 			IntList frozen = Optional.ofNullable(rules.catToInventorySlots("/FROZEN"))
@@ -344,16 +350,4 @@ public class InvTweaksMod {
 			}
 		}
 	}
-	
-	/*
-    // You can use EventBusSubscriber to automatically subscribe events on the contained class (this is subscribing to the MOD
-    // Event bus for receiving Registry Events)
-    @Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)
-    public static class RegistryEvents {
-        @SubscribeEvent
-        public static void onBlocksRegistry(final RegistryEvent.Register<Block> blockRegistryEvent) {
-            // register a new block here
-            //LOGGER.info("HELLO from Register Block");
-        }
-    }*/
 }
