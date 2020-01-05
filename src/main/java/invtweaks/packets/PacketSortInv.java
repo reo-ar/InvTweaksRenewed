@@ -27,6 +27,7 @@ public class PacketSortInv {
 	
 	public void handle(Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
+			//System.out.println("Received message from client!");
 			if (isPlayer) {
 				Map<String, InvTweaksConfig.Category> cats = InvTweaksConfig.getPlayerCats(ctx.get().getSender());
 				InvTweaksConfig.Ruleset rules = InvTweaksConfig.getPlayerRules(ctx.get().getSender());
@@ -92,6 +93,7 @@ public class PacketSortInv {
 						inv.mainInventory.set(idx, stacks.remove(0));
 					}
 				}
+				//ctx.get().getSender().openContainer.detectAndSendChanges();
 			} else {
 				Container cont = ctx.get().getSender().openContainer;
 				// check if an inventory is open
@@ -130,6 +132,7 @@ public class PacketSortInv {
 						}
 						cur.putStack(stacks.get(i));
 					}
+					//ctx.get().getSender().openContainer.detectAndSendChanges();
 				}
 			}
 		});

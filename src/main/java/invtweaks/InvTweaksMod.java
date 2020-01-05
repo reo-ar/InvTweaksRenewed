@@ -110,6 +110,7 @@ public class InvTweaksMod {
 		keyBindings = ImmutableMap.<String, KeyBinding>builder()
 				.put("sort_player", new KeyBinding("key.invtweaks_sort_player.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_BACKSLASH, "key.categories.invtweaks"))
 				.put("sort_inventory", new KeyBinding("key.invtweaks_sort_inventory.desc", KeyConflictContext.GUI, InputMappings.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "key.categories.invtweaks"))
+				.put("sort_either", new KeyBinding("key.invtweaks_sort_either.desc", KeyConflictContext.GUI, InputMappings.Type.MOUSE, GLFW.GLFW_MOUSE_BUTTON_MIDDLE, "key.categories.invtweaks"))
 				.build();
 		for (KeyBinding kb: keyBindings.values()) ClientRegistry.registerKeyBinding(kb);
 	}
@@ -151,8 +152,7 @@ public class InvTweaksMod {
 		if (event.getGui() instanceof ContainerScreen && !(event.getGui() instanceof CreativeScreen)) {
 			Slot placement = getButtonPlacement(
 					((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
-					slot -> slot.inventory instanceof PlayerInventory
-					&& !PlayerInventory.isHotbar(slot.getSlotIndex()));
+					slot -> slot.inventory instanceof PlayerInventory);
 			if (placement != null && InvTweaksConfig.isSortEnabled(true)) {
 				try {
 					event.addWidget(new InvTweaksButtonSort(
@@ -203,6 +203,9 @@ public class InvTweaksMod {
 	
 	@SubscribeEvent
 	public void onPlayerTick(TickEvent.PlayerTickEvent event) {
+		if (event.phase != TickEvent.Phase.END) {
+			return;
+		}
 		if (event.side == LogicalSide.SERVER) {
 			if (!InvTweaksConfig.getPlayerAutoRefill(event.player)) {
 				return;
@@ -282,6 +285,36 @@ public class InvTweaksMod {
 			if (InvTweaksConfig.isSortEnabled(false) && screensWithExtSort.contains(event.getGui())
 					&& keyBindings.get("sort_inventory").isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
 				NET_INST.sendToServer(new PacketSortInv(false));
+			}
+			
+			Slot slot = ((ContainerScreen<?>)event.getGui()).getSlotUnderMouse();
+			if (slot != null) {
+				boolean isPlayerSort = slot.inventory instanceof PlayerInventory;
+				if (InvTweaksConfig.isSortEnabled(isPlayerSort)
+						&& (isPlayerSort || screensWithExtSort.contains(event.getGui()))
+						&& keyBindings.get("sort_either").isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
+					NET_INST.sendToServer(new PacketSortInv(isPlayerSort));
+				}
+			}
+		}
+	}
+	
+	@OnlyIn(Dist.CLIENT)
+	@SubscribeEvent
+	public void mouseInput(GuiScreenEvent.MouseClickedEvent.Pre event) {
+		if (event.getGui() instanceof ContainerScreen
+				&& !(event.getGui() instanceof CreativeScreen)) {
+			boolean isMouseActive = keyBindings.get("sort_either").getKeyConflictContext().isActive()
+					&& keyBindings.get("sort_either").matchesMouseKey(event.getButton());
+			if (!isMouseActive) return;
+			Slot slot = ((ContainerScreen<?>)event.getGui()).getSlotUnderMouse();
+			if (slot != null) {
+				boolean isPlayerSort = slot.inventory instanceof PlayerInventory;
+				if (InvTweaksConfig.isSortEnabled(isPlayerSort)
+						&& (isPlayerSort || screensWithExtSort.contains(event.getGui()))) {
+					NET_INST.sendToServer(new PacketSortInv(isPlayerSort));
+					event.setCanceled(true); // stop pick block event
+				}
 			}
 		}
 	}
