@@ -277,6 +277,7 @@ public class InvTweaksMod {
 				if (cand.getItem() == item) {
 					cap.extractItem(i, Integer.MAX_VALUE, false);
 					ent.setHeldItem(hand, cand);
+					break;
 				}
 			}
 		});
