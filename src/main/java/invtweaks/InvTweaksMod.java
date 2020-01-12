@@ -85,7 +85,7 @@ public class InvTweaksMod {
 	public static boolean isJEIKeyboardActive() { return isJEIKeyboardActive.getAsBoolean(); }
 	
 	public InvTweaksMod() {
-		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, InvTweaksConfig.CONFIG);
+		ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, InvTweaksConfig.CLIENT_CONFIG);
 		
 		// Register the setup method for modloading
 		FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
@@ -99,7 +99,7 @@ public class InvTweaksMod {
 		// Register ourselves for server and other game events we are interested in
 		MinecraftForge.EVENT_BUS.register(this);
 		
-		InvTweaksConfig.loadConfig(InvTweaksConfig.CONFIG, FMLPaths.CONFIGDIR.get().resolve("invtweaks-client.toml"));
+		InvTweaksConfig.loadConfig(InvTweaksConfig.CLIENT_CONFIG, FMLPaths.CONFIGDIR.get().resolve("invtweaks-client.toml"));
 	}
 	
 	private void setup(final FMLCommonSetupEvent event) {

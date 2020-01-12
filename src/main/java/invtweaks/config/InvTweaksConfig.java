@@ -27,7 +27,7 @@ import net.minecraftforge.fml.config.*;
 
 @Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)
 public class InvTweaksConfig {
-	public static final ForgeConfigSpec CONFIG;
+	public static final ForgeConfigSpec CLIENT_CONFIG;
 	
 	private static ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
 	
@@ -36,6 +36,8 @@ public class InvTweaksConfig {
 	private static ForgeConfigSpec.BooleanValue ENABLE_AUTOREFILL;
 	
 	private static ForgeConfigSpec.IntValue ENABLE_SORT;
+	
+	//private static ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CONT_OVERRIDES;
 	
 	public static final Map<String, Category> DEFAULT_CATS = ImmutableMap.<String, Category>builder()
 			.put("sword", new Category("/instanceof:net.minecraft.item.SwordItem"))
@@ -126,7 +128,7 @@ public class InvTweaksConfig {
 			builder.pop();
 		}
 		
-		CONFIG = builder.build();
+		CLIENT_CONFIG = builder.build();
 	}
 	
 	@SuppressWarnings("unchecked")

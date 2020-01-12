@@ -98,12 +98,14 @@ public class PacketSortInv {
 				Container cont = ctx.get().getSender().openContainer;
 				// check if an inventory is open
 				if (cont != ctx.get().getSender().container) {
-					Iterable<Slot> validSlots = () -> cont.inventorySlots.stream()
+					List<Slot> validSlots = cont.inventorySlots.stream()
 							.filter(slot -> !(slot.inventory instanceof PlayerInventory))
-							.filter(slot -> slot.canTakeStack(ctx.get().getSender()))
-							.iterator();
+							.filter(slot -> {
+								return slot.canTakeStack(ctx.get().getSender()) || !slot.getHasStack();
+							})
+							.collect(Collectors.toList());
 					if (!validSlots.iterator().hasNext()) return;
-					List<ItemStack> stacks = Utils.condensed(() -> Streams.stream(validSlots)
+					List<ItemStack> stacks = Utils.condensed(() -> validSlots.stream()
 							.map(slot -> slot.getStack())
 							.filter(st -> !st.isEmpty())
 							.iterator());
