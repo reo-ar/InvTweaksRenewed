@@ -71,7 +71,7 @@ public class InvTweaksConfig {
 	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
 	public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
 	public static final Map<String, ContOverride> DEFAULT_CONT_OVERRIDES
-		= ImmutableMap.of(ChestContainer.class.getName(), new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, "0-8")); // TODO remove test
+		= ImmutableMap.of("com.tfar.craftingstation.CraftingStationContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""));
 	
 	@SuppressWarnings("unused")
 	private static Map<String, Category> COMPILED_CATS = DEFAULT_CATS;
@@ -388,7 +388,9 @@ public class InvTweaksConfig {
 			this.x = x; this.y = y;
 			this.sortRangeSpec = sortRangeSpec;
 			IntList tmp = null;
-			if (!sortRangeSpec.equalsIgnoreCase(NO_SPEC_OVERRIDE)) {
+			if (sortRangeSpec.isEmpty()) {
+				tmp = IntLists.EMPTY_LIST;
+			} else if (!sortRangeSpec.equalsIgnoreCase(NO_SPEC_OVERRIDE)) {
 				try {
 					tmp = Arrays.stream(sortRangeSpec.split("\\s*,\\s*"))
 					.flatMapToInt(str -> {
