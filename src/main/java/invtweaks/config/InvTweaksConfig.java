@@ -5,6 +5,8 @@ import java.util.*;
 import java.util.function.*;
 import java.util.stream.*;
 
+import javax.annotation.*;
+
 import com.electronwill.nightconfig.core.*;
 import com.electronwill.nightconfig.core.file.*;
 import com.electronwill.nightconfig.core.io.WritingMode;
@@ -15,6 +17,7 @@ import invtweaks.packets.*;
 import invtweaks.util.*;
 import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.entity.player.*;
+import net.minecraft.inventory.container.*;
 import net.minecraft.item.*;
 import net.minecraft.tags.*;
 import net.minecraft.util.*;
@@ -37,7 +40,17 @@ public class InvTweaksConfig {
 	
 	private static ForgeConfigSpec.IntValue ENABLE_SORT;
 	
-	//private static ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CONT_OVERRIDES;
+	/**
+	 * Sentinel to indicate that the GUI position should be left alone.
+	 */
+	public static final int NO_POS_OVERRIDE = -1418392593;
+	
+	public static final String NO_SPEC_OVERRIDE = "default";
+	
+	// containerClass
+	// x, y
+	// sortRange
+	private static ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CONT_OVERRIDES;
 	
 	public static final Map<String, Category> DEFAULT_CATS = ImmutableMap.<String, Category>builder()
 			.put("sword", new Category("/instanceof:net.minecraft.item.SwordItem"))
@@ -57,10 +70,13 @@ public class InvTweaksConfig {
 			.build();
 	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
 	public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
+	public static final Map<String, ContOverride> DEFAULT_CONT_OVERRIDES
+		= ImmutableMap.of(ChestContainer.class.getName(), new ContOverride(0, 0, NO_SPEC_OVERRIDE));
 	
 	@SuppressWarnings("unused")
 	private static Map<String, Category> COMPILED_CATS = DEFAULT_CATS;
 	private static Ruleset COMPILED_RULES = DEFAULT_RULES;
+	private static Map<String, ContOverride> COMPILED_CONT_OVERRIDES = DEFAULT_CONT_OVERRIDES;
 	
 	static {
 		ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -111,6 +127,12 @@ public class InvTweaksConfig {
 					DEFAULT_RAW_RULES,
 					obj -> obj instanceof String);
 			
+			CONT_OVERRIDES = builder.comment()
+					.defineList("containerOverrides",
+							DEFAULT_CONT_OVERRIDES.entrySet().stream()
+							.map(ent -> ent.getValue().toConfig(ent.getKey())).collect(Collectors.toList()),
+							obj -> obj instanceof UnmodifiableConfig);
+			
 			builder.pop();
 		}
 		
@@ -133,7 +155,7 @@ public class InvTweaksConfig {
 	
 	@SuppressWarnings("unchecked")
 	public static PacketUpdateConfig getSyncPacket() {
-		return new PacketUpdateConfig((List<UnmodifiableConfig>)CATS.get(), (List<String>)RULES.get(), ENABLE_AUTOREFILL.get());
+		return new PacketUpdateConfig((List<UnmodifiableConfig>)CATS.get(), (List<String>)RULES.get(), (List<UnmodifiableConfig>)CONT_OVERRIDES.get(), ENABLE_AUTOREFILL.get());
 	}
 	
 	private static boolean isDirty = false;
@@ -157,11 +179,16 @@ public class InvTweaksConfig {
 		if (isDirty) {
 			COMPILED_CATS = cfgToCompiledCats((List<UnmodifiableConfig>)CATS.get());
 			COMPILED_RULES = new Ruleset((List<String>)RULES.get());
+			COMPILED_CONT_OVERRIDES = cfgToCompiledContOverrides((List<UnmodifiableConfig>)CONT_OVERRIDES.get());
 		}
 	}
 	
 	public static Ruleset getSelfCompiledRules() {
 		return COMPILED_RULES;
+	}
+	
+	public static Map<String, ContOverride> getSelfCompiledContOverrides() {
+		return COMPILED_CONT_OVERRIDES;
 	}
 	
 	public static void loadConfig(ForgeConfigSpec spec, Path path) {
@@ -178,6 +205,7 @@ public class InvTweaksConfig {
 	private static final Map<UUID, Map<String, Category>> playerToCats = new HashMap<>();
 	private static final Map<UUID, Ruleset> playerToRules = new HashMap<>();
 	private static final Set<UUID> playerAutoRefill = new HashSet<>();
+	private static final Map<UUID, Map<String, ContOverride>> playerToContOverrides = new HashMap<>();
 	
 	public static void setPlayerCats(PlayerEntity ent, Map<String, Category> cats) {
 		playerToCats.put(ent.getUniqueID(), cats);
@@ -192,6 +220,10 @@ public class InvTweaksConfig {
 			playerAutoRefill.remove(ent.getUniqueID());
 		}
 	}
+	public static void setPlayerContOverrides(PlayerEntity ent, Map<String, ContOverride> val) {
+		playerToContOverrides.put(ent.getUniqueID(), val);
+	}
+	
 	public static Map<String, Category> getPlayerCats(PlayerEntity ent) {
 		return playerToCats.getOrDefault(ent.getUniqueID(), DEFAULT_CATS);
 	}
@@ -200,6 +232,9 @@ public class InvTweaksConfig {
 	}
 	public static boolean getPlayerAutoRefill(PlayerEntity ent) {
 		return playerAutoRefill.contains(ent.getUniqueID());
+	}
+	public static Map<String, ContOverride> getPlayerContOverrides(PlayerEntity ent) {
+		return playerToContOverrides.getOrDefault(ent.getUniqueID(), DEFAULT_CONT_OVERRIDES);
 	}
 	
 	public static boolean isSortEnabled(boolean isPlayerSort) {
@@ -217,6 +252,18 @@ public class InvTweaksConfig {
 			}
 		}
 		return catsMap;
+	}
+	
+	public static Map<String, ContOverride> cfgToCompiledContOverrides(List<UnmodifiableConfig> lst) {
+		Map<String, ContOverride> res = new LinkedHashMap<>();
+		for (UnmodifiableConfig subCfg: lst) {
+			res.put(subCfg.getOrElse("containerClass", ""),
+					new ContOverride(
+							subCfg.getOrElse("x", NO_POS_OVERRIDE),
+							subCfg.getOrElse("y", NO_POS_OVERRIDE),
+							subCfg.getOrElse("sortRange", NO_SPEC_OVERRIDE)));
+		}
+		return res;
 	}
 	
 	public static class Category {
@@ -328,6 +375,58 @@ public class InvTweaksConfig {
 		
 		public IntList fallbackInventoryRules() {
 			return compiledFallbackRules;
+		}
+	}
+	
+	public static class ContOverride {
+		private final int x, y;
+		@Nullable
+		private final IntList sortRange;
+		private final String sortRangeSpec;
+		
+		public ContOverride(int x, int y, String sortRangeSpec) {
+			this.x = x; this.y = y;
+			this.sortRangeSpec = sortRangeSpec;
+			IntList tmp = null;
+			if (!sortRangeSpec.equalsIgnoreCase(NO_SPEC_OVERRIDE)) {
+				try {
+					tmp = Arrays.stream(sortRangeSpec.split("\\s*,\\s*"))
+					.flatMapToInt(str -> {
+						String[] rangeSpec = str.split("\\s*-\\s*");
+						return IntStream.rangeClosed(Integer.parseInt(rangeSpec[0]), Integer.parseInt(rangeSpec[1]));
+					})
+					.collect(IntArrayList::new, IntList::add, IntList::addAll);
+				} catch (NumberFormatException e) {
+					InvTweaksMod.LOGGER.warn("Invalid slot spec: "+sortRangeSpec);
+					tmp = IntLists.EMPTY_LIST;
+				}
+			}
+			sortRange = tmp;
+		}
+
+		public int getX() {
+			return x;
+		}
+
+		public int getY() {
+			return y;
+		}
+
+		public @Nullable IntList getSortRange() {
+			return sortRange;
+		}
+		
+		public boolean isSortDisabled() {
+			return sortRange != null && sortRange.isEmpty();
+		}
+		
+		public CommentedConfig toConfig(String contClass) {
+			CommentedConfig result = CommentedConfig.inMemory();
+			result.set("containerClass", contClass);
+			if (x != NO_POS_OVERRIDE) result.set("x", x);
+			if (y != NO_POS_OVERRIDE) result.set("y", y);
+			if (!sortRangeSpec.equalsIgnoreCase(NO_SPEC_OVERRIDE)) result.set("sortRange", sortRangeSpec);
+			return result;
 		}
 	}
 }

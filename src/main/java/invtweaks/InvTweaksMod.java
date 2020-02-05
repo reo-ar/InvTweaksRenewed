@@ -158,8 +158,10 @@ public class InvTweaksMod {
 	@SubscribeEvent
 	public void onGuiInit(GuiScreenEvent.InitGuiEvent.Post event) {
 		//LOGGER.log(Level.INFO, event.getGui().getClass());
-		if (event.getGui() instanceof ContainerScreen && !(event.getGui() instanceof CreativeScreen)) {
-			Slot placement = getButtonPlacement(
+		if (event.getGui() instanceof ContainerScreen
+				&& !(event.getGui() instanceof CreativeScreen)) {
+			// first, work with player inventory
+			Slot placement = getDefaultButtonPlacement(
 					((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
 					slot -> slot.inventory instanceof PlayerInventory);
 			if (placement != null && InvTweaksConfig.isSortEnabled(true)) {
@@ -173,15 +175,36 @@ public class InvTweaksMod {
 					throw new RuntimeException(e);
 				}
 			}
-			if (!(event.getGui() instanceof DisplayEffectsScreen)) {
-				placement = getButtonPlacement(
+			
+			// then, work with external inventory
+			String contClass = event.getGui() != null ? ((ContainerScreen<?>)event.getGui()).getContainer().getClass().getName() : "";
+			InvTweaksConfig.ContOverride override = InvTweaksConfig.getSelfCompiledContOverrides()
+					.get(contClass);
+			
+			if (!(event.getGui() instanceof DisplayEffectsScreen) && !Optional.ofNullable(override)
+					.filter(or -> or.isSortDisabled())
+					.isPresent()) {
+				int x = InvTweaksConfig.NO_POS_OVERRIDE, y = InvTweaksConfig.NO_POS_OVERRIDE;
+				if (override != null) {
+					x = override.getX(); y = override.getY();
+				}
+				placement = getDefaultButtonPlacement(
 						((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
 						slot -> !(slot.inventory instanceof PlayerInventory || slot.inventory instanceof CraftingInventory));
-				if (placement != null && InvTweaksConfig.isSortEnabled(false)) {
+				if (placement != null) {
+					if (x == InvTweaksConfig.NO_POS_OVERRIDE) {
+						x = placement.xPos + 16;
+					}
+					if (y == InvTweaksConfig.NO_POS_OVERRIDE) {
+						y = placement.yPos;
+					}
+				}
+				//System.out.println(x+ " " +y);
+				if (InvTweaksConfig.isSortEnabled(false)) {
 					try {
 						event.addWidget(new InvTweaksButtonSort(
-								guiLeftF.getInt(event.getGui())+placement.xPos+16,
-								guiTopF.getInt(event.getGui())+placement.yPos,
+								guiLeftF.getInt(event.getGui())+x,
+								guiTopF.getInt(event.getGui())+y,
 								false));
 						screensWithExtSort.add(event.getGui());
 					} catch (Exception e) {
@@ -196,7 +219,7 @@ public class InvTweaksMod {
 	
 	public static final int MIN_SLOTS = 9;
 	
-	public static @Nullable Slot getButtonPlacement(Collection<Slot> slots, Predicate<Slot> filter) {
+	public static @Nullable Slot getDefaultButtonPlacement(Collection<Slot> slots, Predicate<Slot> filter) {
 		if (slots.stream().filter(filter).count() < MIN_SLOTS) {
 			return null;
 		}
