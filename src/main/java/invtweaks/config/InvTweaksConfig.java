@@ -71,7 +71,7 @@ public class InvTweaksConfig {
 	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
 	public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
 	public static final Map<String, ContOverride> DEFAULT_CONT_OVERRIDES
-		= ImmutableMap.of(ChestContainer.class.getName(), new ContOverride(0, 0, NO_SPEC_OVERRIDE));
+		= ImmutableMap.of(ChestContainer.class.getName(), new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, "0-8")); // TODO remove test
 	
 	@SuppressWarnings("unused")
 	private static Map<String, Category> COMPILED_CATS = DEFAULT_CATS;

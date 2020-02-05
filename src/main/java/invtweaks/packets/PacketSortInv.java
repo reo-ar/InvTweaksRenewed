@@ -96,9 +96,19 @@ public class PacketSortInv {
 				//ctx.get().getSender().openContainer.detectAndSendChanges();
 			} else {
 				Container cont = ctx.get().getSender().openContainer;
+				
 				// check if an inventory is open
 				if (cont != ctx.get().getSender().container) {
-					List<Slot> validSlots = cont.inventorySlots.stream()
+					String contClass = cont.getClass().getName();
+					InvTweaksConfig.ContOverride override = InvTweaksConfig.getPlayerContOverrides(ctx.get().getSender()).get(contClass);
+					
+					if (override != null && override.isSortDisabled()) return;
+					
+					List<Slot> validSlots = (override != null && override.getSortRange() != null
+							? override.getSortRange().stream()
+									.filter(idx -> 0 <= idx && idx < cont.inventorySlots.size())
+									.map(cont.inventorySlots::get)
+							: cont.inventorySlots.stream())
 							.filter(slot -> !(slot.inventory instanceof PlayerInventory))
 							.filter(slot -> {
 								return slot.canTakeStack(ctx.get().getSender()) || !slot.getHasStack();
