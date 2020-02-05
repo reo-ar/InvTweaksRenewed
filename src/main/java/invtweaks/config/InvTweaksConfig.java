@@ -17,7 +17,6 @@ import invtweaks.packets.*;
 import invtweaks.util.*;
 import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.entity.player.*;
-import net.minecraft.inventory.container.*;
 import net.minecraft.item.*;
 import net.minecraft.tags.*;
 import net.minecraft.util.*;
@@ -127,7 +126,17 @@ public class InvTweaksConfig {
 					DEFAULT_RAW_RULES,
 					obj -> obj instanceof String);
 			
-			CONT_OVERRIDES = builder.comment()
+			CONT_OVERRIDES = builder.comment(
+					"Custom settings per GUI",
+					"x = x-position of external sort button relative to GUI top left",
+					"y = same as above except for the y-position",
+					"Omit x and y to leave position unchanged",
+					"sortRange = slots to sort",
+					"E.g. sortRange = \"5,0-2\" sorts slots 5,0,1,2 in that order",
+					"sortRange = \"\" disables sorting for that container",
+					"Out-of-bound slots are ignored",
+					"Omit sortRange to leave as default"
+					)
 					.defineList("containerOverrides",
 							DEFAULT_CONT_OVERRIDES.entrySet().stream()
 							.map(ent -> ent.getValue().toConfig(ent.getKey())).collect(Collectors.toList()),
