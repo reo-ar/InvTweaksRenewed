@@ -200,12 +200,14 @@ public class InvTweaksMod {
 					}
 				}
 				//System.out.println(x+ " " +y);
-				if (InvTweaksConfig.isSortEnabled(false) && InvTweaksConfig.isButtonEnabled(false)) {
+				if (InvTweaksConfig.isSortEnabled(false)) {
 					try {
-						event.addWidget(new InvTweaksButtonSort(
-								guiLeftF.getInt(event.getGui())+x,
-								guiTopF.getInt(event.getGui())+y,
-								false));
+						if (InvTweaksConfig.isButtonEnabled(false)) {
+							event.addWidget(new InvTweaksButtonSort(
+									guiLeftF.getInt(event.getGui())+x,
+									guiTopF.getInt(event.getGui())+y,
+									false));
+						}
 						screensWithExtSort.add(event.getGui());
 					} catch (Exception e) {
 						Throwables.throwIfUnchecked(e);
