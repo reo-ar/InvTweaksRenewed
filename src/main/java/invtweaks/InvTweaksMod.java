@@ -5,7 +5,6 @@ import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.*;
 import net.minecraft.client.gui.screen.inventory.*;
 import net.minecraft.client.gui.widget.*;
-import net.minecraft.client.renderer.*;
 import net.minecraft.client.settings.*;
 import net.minecraft.client.util.*;
 import net.minecraft.entity.player.*;
@@ -17,7 +16,6 @@ import net.minecraft.stats.*;
 import net.minecraft.util.*;
 import net.minecraftforge.api.distmarker.*;
 import net.minecraftforge.client.event.*;
-import net.minecraftforge.client.event.RenderGameOverlayEvent.*;
 import net.minecraftforge.client.settings.*;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.*;
@@ -44,7 +42,7 @@ import org.lwjgl.glfw.*;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.*;
-import com.mojang.blaze3d.platform.*;
+import com.mojang.blaze3d.systems.*;
 
 import invtweaks.config.*;
 import invtweaks.gui.*;
@@ -200,12 +198,14 @@ public class InvTweaksMod {
 					}
 				}
 				//System.out.println(x+ " " +y);
-				if (InvTweaksConfig.isSortEnabled(false) && InvTweaksConfig.isButtonEnabled(false)) {
+				if (InvTweaksConfig.isSortEnabled(false)) {
 					try {
-						event.addWidget(new InvTweaksButtonSort(
-								guiLeftF.getInt(event.getGui())+x,
-								guiTopF.getInt(event.getGui())+y,
-								false));
+						if (InvTweaksConfig.isButtonEnabled(false)) {
+							event.addWidget(new InvTweaksButtonSort(
+									guiLeftF.getInt(event.getGui())+x,
+									guiTopF.getInt(event.getGui())+y,
+									false));
+						}
 						screensWithExtSort.add(event.getGui());
 					} catch (Exception e) {
 						Throwables.throwIfUnchecked(e);
@@ -363,7 +363,7 @@ public class InvTweaksMod {
 	@OnlyIn(Dist.CLIENT)
 	@SubscribeEvent
 	public void renderOverlay(RenderGameOverlayEvent.Post event) {
-		if (event.getType() == ElementType.HOTBAR) {
+		if (event.getType() == RenderGameOverlayEvent.ElementType.HOTBAR) {
 			PlayerEntity ent = Minecraft.getInstance().player;
 			if (!InvTweaksConfig.getPlayerAutoRefill(ent)) {
 				return;
@@ -380,8 +380,8 @@ public class InvTweaksMod {
 			}
 			
 			HandSide dominantHand = ent.getPrimaryHand();
-			int i = Minecraft.getInstance().mainWindow.getScaledWidth() / 2;
-			int i2 = Minecraft.getInstance().mainWindow.getScaledHeight() - 16 - 3;
+			int i = Minecraft.getInstance().getMainWindow().getScaledWidth() / 2;
+			int i2 = Minecraft.getInstance().getMainWindow().getScaledHeight() - 16 - 3;
 			int iprime;
 			if (dominantHand == HandSide.RIGHT) {
 				iprime = i + 91 + 10;
@@ -398,11 +398,10 @@ public class InvTweaksMod {
 				ItemStack toRender = ent.getHeldItemMainhand().copy();
 				toRender.setCount(itemCount);
 				
-				GlStateManager.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-				GlStateManager.enableRescaleNormal();
-				GlStateManager.enableBlend();
-				GlStateManager.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-				RenderHelper.enableGUIStandardItemLighting();
+				RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+				RenderSystem.enableRescaleNormal();
+				RenderSystem.enableBlend();
+				RenderSystem.defaultBlendFunc();
 				
 				try {
 					renderHotbarItemM.invoke(
@@ -412,9 +411,8 @@ public class InvTweaksMod {
 				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 					throw new RuntimeException(e);
 				} finally {
-					RenderHelper.disableStandardItemLighting();
-					GlStateManager.disableRescaleNormal();
-					GlStateManager.disableBlend();
+					RenderSystem.disableRescaleNormal();
+					RenderSystem.disableBlend();
 				}
 			}
 		}

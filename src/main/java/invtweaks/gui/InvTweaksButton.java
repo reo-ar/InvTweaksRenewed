@@ -4,9 +4,10 @@ import invtweaks.*;
 import net.minecraft.client.*;
 import net.minecraft.client.gui.widget.button.*;
 import net.minecraft.util.*;
-import net.minecraftforge.fml.client.config.*;
+import net.minecraftforge.fml.client.gui.*;
+import net.minecraftforge.fml.client.gui.widget.*;
 
-public class InvTweaksButton extends GuiButtonExt {
+public class InvTweaksButton extends ExtendedButton {
 	private ResourceLocation tex;
 	private int tx, ty;
 	
@@ -35,7 +36,7 @@ public class InvTweaksButton extends GuiButtonExt {
 			GuiUtils.drawTexturedModalRect(
 					x, y, tx, ty,
 					width, height,
-					this.blitOffset);
+					this.getBlitOffset());
 		}
 	}
 }

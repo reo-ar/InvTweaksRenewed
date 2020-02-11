@@ -184,7 +184,7 @@ public class InvTweaksConfig {
 	}
 	
 	@SubscribeEvent
-	public static void onReload(final ModConfig.ConfigReloading configEvent) {
+	public static void onReload(final ModConfig.Reloading configEvent) {
 		ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
 		executor.runAsync(() -> setDirty(true));
 	}
