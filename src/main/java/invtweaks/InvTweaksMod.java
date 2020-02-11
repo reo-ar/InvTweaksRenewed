@@ -164,7 +164,7 @@ public class InvTweaksMod {
 			Slot placement = getDefaultButtonPlacement(
 					((ContainerScreen<?>)event.getGui()).getContainer().inventorySlots,
 					slot -> slot.inventory instanceof PlayerInventory);
-			if (placement != null && InvTweaksConfig.isSortEnabled(true)) {
+			if (placement != null && InvTweaksConfig.isSortEnabled(true) && InvTweaksConfig.isButtonEnabled(true)) {
 				try {
 					event.addWidget(new InvTweaksButtonSort(
 							guiLeftF.getInt(event.getGui())+placement.xPos+16,
@@ -200,7 +200,7 @@ public class InvTweaksMod {
 					}
 				}
 				//System.out.println(x+ " " +y);
-				if (InvTweaksConfig.isSortEnabled(false)) {
+				if (InvTweaksConfig.isSortEnabled(false) && InvTweaksConfig.isButtonEnabled(false)) {
 					try {
 						event.addWidget(new InvTweaksButtonSort(
 								guiLeftF.getInt(event.getGui())+x,

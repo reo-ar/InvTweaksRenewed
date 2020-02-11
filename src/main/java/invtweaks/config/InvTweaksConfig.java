@@ -39,6 +39,8 @@ public class InvTweaksConfig {
 	
 	private static ForgeConfigSpec.IntValue ENABLE_SORT;
 	
+	private static ForgeConfigSpec.IntValue ENABLE_BUTTONS;
+	
 	/**
 	 * Sentinel to indicate that the GUI position should be left alone.
 	 */
@@ -155,6 +157,12 @@ public class InvTweaksConfig {
 					"2 = external sorting only",
 					"3 = all sorting enabled (default)"
 					).defineInRange("enableSort", 3, 0, 3);
+			ENABLE_BUTTONS = builder.comment(
+					"0 = disable buttons (i.e. keybind only)",
+					"1 = buttons for player sorting only",
+					"2 = buttons for external sorting only",
+					"3 = all buttons enabled (default)"
+					).defineInRange("enableButtons", 3, 0, 3);
 			
 			builder.pop();
 		}
@@ -247,7 +255,13 @@ public class InvTweaksConfig {
 	}
 	
 	public static boolean isSortEnabled(boolean isPlayerSort) {
-		return ENABLE_SORT.get() == 3 || ENABLE_SORT.get() == (isPlayerSort ? 1 : 2);
+		return isFlagEnabled(ENABLE_SORT.get(), isPlayerSort);
+	}
+	public static boolean isButtonEnabled(boolean isPlayer) {
+		return isFlagEnabled(ENABLE_BUTTONS.get(), isPlayer);
+	}
+	private static boolean isFlagEnabled(int flag, boolean isPlayer) {
+		return flag == 3 || flag == (isPlayer ? 1 : 2);
 	}
 	
 	public static Map<String, Category> cfgToCompiledCats(List<UnmodifiableConfig> lst) {
