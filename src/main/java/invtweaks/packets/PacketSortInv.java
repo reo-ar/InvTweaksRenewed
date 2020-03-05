@@ -113,6 +113,7 @@ public class PacketSortInv {
 							.filter(slot -> {
 								return slot.canTakeStack(ctx.get().getSender()) || !slot.getHasStack();
 							})
+							.filter(slot -> slot.isItemValid(ItemStack.EMPTY))
 							.collect(Collectors.toList());
 					if (!validSlots.iterator().hasNext()) return;
 					List<ItemStack> stacks = Utils.condensed(() -> validSlots.stream()
