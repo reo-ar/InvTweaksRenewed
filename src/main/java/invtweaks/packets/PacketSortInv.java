@@ -33,7 +33,7 @@ public class PacketSortInv {
 				InvTweaksConfig.Ruleset rules = InvTweaksConfig.getPlayerRules(ctx.get().getSender());
 				IntList lockedSlots = Optional.ofNullable(rules.catToInventorySlots("/LOCKED"))
 						.<IntList>map(IntArrayList::new) // copy list to prevent modification
-						.orElse(IntLists.EMPTY_LIST);
+						.orElseGet(IntArrayList::new);
 				lockedSlots.addAll(Optional.ofNullable(rules.catToInventorySlots("/FROZEN"))
 						.orElse(IntLists.EMPTY_LIST));
 				lockedSlots.sort(null);
