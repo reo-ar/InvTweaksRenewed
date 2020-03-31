@@ -16,11 +16,13 @@ import invtweaks.*;
 import invtweaks.packets.*;
 import invtweaks.util.*;
 import it.unimi.dsi.fastutil.ints.*;
+import net.minecraft.client.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.item.*;
 import net.minecraft.tags.*;
 import net.minecraft.util.*;
 import net.minecraft.util.concurrent.*;
+import net.minecraftforge.api.distmarker.*;
 import net.minecraftforge.common.*;
 import net.minecraftforge.eventbus.api.*;
 import net.minecraftforge.fml.*;
@@ -74,7 +76,6 @@ public class InvTweaksConfig {
 	public static final Map<String, ContOverride> DEFAULT_CONT_OVERRIDES
 		= ImmutableMap.of("com.tfar.craftingstation.CraftingStationContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""));
 	
-	@SuppressWarnings("unused")
 	private static Map<String, Category> COMPILED_CATS = DEFAULT_CATS;
 	private static Ruleset COMPILED_RULES = DEFAULT_RULES;
 	private static Map<String, ContOverride> COMPILED_CONT_OVERRIDES = DEFAULT_CONT_OVERRIDES;
@@ -200,6 +201,10 @@ public class InvTweaksConfig {
 		}
 	}
 	
+	public static Map<String, Category> getSelfCompiledCats() {
+		return COMPILED_CATS;
+	}
+	
 	public static Ruleset getSelfCompiledRules() {
 		return COMPILED_RULES;
 	}
@@ -242,15 +247,27 @@ public class InvTweaksConfig {
 	}
 	
 	public static Map<String, Category> getPlayerCats(PlayerEntity ent) {
+		if (DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
+			return getSelfCompiledCats();
+		}
 		return playerToCats.getOrDefault(ent.getUniqueID(), DEFAULT_CATS);
 	}
 	public static Ruleset getPlayerRules(PlayerEntity ent) {
+		if (DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
+			return getSelfCompiledRules();
+		}
 		return playerToRules.getOrDefault(ent.getUniqueID(), DEFAULT_RULES);
 	}
 	public static boolean getPlayerAutoRefill(PlayerEntity ent) {
+		if (DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
+			return ENABLE_AUTOREFILL.get();
+		}
 		return playerAutoRefill.contains(ent.getUniqueID());
 	}
 	public static Map<String, ContOverride> getPlayerContOverrides(PlayerEntity ent) {
+		if (DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
+			return getSelfCompiledContOverrides();
+		}
 		return playerToContOverrides.getOrDefault(ent.getUniqueID(), DEFAULT_CONT_OVERRIDES);
 	}
 	

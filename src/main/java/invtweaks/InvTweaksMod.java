@@ -47,6 +47,7 @@ import com.mojang.blaze3d.systems.*;
 import invtweaks.config.*;
 import invtweaks.gui.*;
 import invtweaks.packets.*;
+import invtweaks.util.*;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.*;
 
@@ -67,7 +68,7 @@ public class InvTweaksMod {
 	
 	public static final String CHANNEL = "channel";
 	
-	public static final String NET_VERS = "1";
+	public static final String NET_VERS = "2";
 	
 	public static SimpleChannel NET_INST;
 	
@@ -100,11 +101,33 @@ public class InvTweaksMod {
 		InvTweaksConfig.loadConfig(InvTweaksConfig.CLIENT_CONFIG, FMLPaths.CONFIGDIR.get().resolve("invtweaks-client.toml"));
 	}
 	
+	private static boolean clientOnly = true;
+	private static final Object clientOnlyL = new Object();
+	
+	public static boolean clientOnly() {
+		synchronized (clientOnlyL) { return clientOnly; }
+	}
+	
+	public static void requestSort(boolean isPlayer) {
+		if (clientOnly()) {
+			Sorting.executeSort(Minecraft.getInstance().player, isPlayer);
+		} else {
+			NET_INST.sendToServer(new PacketSortInv(isPlayer));
+		}
+	}
+	
 	private void setup(final FMLCommonSetupEvent event) {
 		// if client doesn't have mod installed, that's fine
 		NET_INST = NetworkRegistry.newSimpleChannel(
 				new ResourceLocation(MODID, CHANNEL),
-				() -> NET_VERS, NET_VERS::equals, s -> true);
+				() -> NET_VERS,
+				s -> {
+					synchronized (clientOnlyL) {
+						clientOnly = NetworkRegistry.ABSENT.equals(s) || NetworkRegistry.ACCEPTVANILLA.equals(s);
+						return NET_VERS.equals(s) || clientOnly;
+					}
+				},
+				s -> NET_VERS.equals(s) || NetworkRegistry.ABSENT.equals(s) || NetworkRegistry.ACCEPTVANILLA.equals(s));
 		NET_INST.registerMessage(0, PacketSortInv.class,
 				PacketSortInv::encode, PacketSortInv::new, PacketSortInv::handle);
 		NET_INST.registerMessage(1, PacketUpdateConfig.class,
@@ -263,7 +286,7 @@ public class InvTweaksMod {
 			}
 		} else {
 			if (InvTweaksConfig.isDirty()) {
-				NET_INST.sendToServer(InvTweaksConfig.getSyncPacket());
+				if (!clientOnly()) NET_INST.sendToServer(InvTweaksConfig.getSyncPacket());
 				InvTweaksConfig.setDirty(false);
 			}
 		}
@@ -320,11 +343,11 @@ public class InvTweaksMod {
 			//System.out.println(event.getGui().getFocused());
 			if (InvTweaksConfig.isSortEnabled(true) && keyBindings.get("sort_player")
 				.isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
-				NET_INST.sendToServer(new PacketSortInv(true));
+				requestSort(true);
 			}
 			if (InvTweaksConfig.isSortEnabled(false) && screensWithExtSort.contains(event.getGui())
 					&& keyBindings.get("sort_inventory").isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
-				NET_INST.sendToServer(new PacketSortInv(false));
+				requestSort(false);
 			}
 			
 			Slot slot = ((ContainerScreen<?>)event.getGui()).getSlotUnderMouse();
@@ -333,7 +356,7 @@ public class InvTweaksMod {
 				if (InvTweaksConfig.isSortEnabled(isPlayerSort)
 						&& (isPlayerSort || screensWithExtSort.contains(event.getGui()))
 						&& keyBindings.get("sort_either").isActiveAndMatches(InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
-					NET_INST.sendToServer(new PacketSortInv(isPlayerSort));
+					requestSort(isPlayerSort);
 				}
 			}
 		}
@@ -352,7 +375,7 @@ public class InvTweaksMod {
 				boolean isPlayerSort = slot.inventory instanceof PlayerInventory;
 				if (InvTweaksConfig.isSortEnabled(isPlayerSort)
 						&& (isPlayerSort || screensWithExtSort.contains(event.getGui()))) {
-					NET_INST.sendToServer(new PacketSortInv(isPlayerSort));
+					requestSort(isPlayerSort);
 					event.setCanceled(true); // stop pick block event
 				}
 			}

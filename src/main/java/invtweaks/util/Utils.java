@@ -2,12 +2,14 @@ package invtweaks.util;
 
 //import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.*;
 import java.util.stream.*;
 
 import com.google.common.base.Equivalence;
 import com.google.common.collect.Streams;
 
 import it.unimi.dsi.fastutil.ints.*;
+import net.minecraft.inventory.container.*;
 import net.minecraft.item.*;
 //import net.minecraftforge.fml.common.*;
 import net.minecraftforge.items.*;
@@ -136,15 +138,22 @@ public class Utils {
 		
 	};
 	
-	public static List<ItemStack> collated(Iterable<ItemStack> iterable) {
+	public static <T extends Collection<ItemStack>> T collated(Iterable<ItemStack> iterable, Supplier<T> collSupp) {
 		Map<Equivalence.Wrapper<ItemStack>, List<ItemStack>> mapping = Streams.stream(iterable)
 				.collect(Collectors.groupingBy(st -> STACKABLE.wrap(st), LinkedHashMap::new, Collectors.toList()));
-		return mapping.values().stream().flatMap(ls -> ls.stream()).collect(Collectors.toList());
+		return mapping.values().stream().flatMap(ls -> ls.stream()).collect(Collectors.toCollection(collSupp));
+	}
+	
+	public static Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots(Iterable<Slot> iterable) {
+		return Streams.stream(iterable)
+				.collect(Collectors.groupingBy(sl -> STACKABLE.wrap(sl.getStack().copy()), // @#*! itemstack mutability
+						LinkedHashMap::new,
+						Collectors.toCollection(LinkedHashSet::new)));
 	}
 	
 	//@SuppressWarnings("unchecked")
 	public static List<ItemStack> condensed(Iterable<ItemStack> iterable) {
-		List<ItemStack> coll = collated(iterable);
+		List<ItemStack> coll = collated(iterable, ArrayList::new);
 		// TODO special handling for Nether Chests-esque mods?
 		ItemStackHandler stackBuffer = new ItemStackHandler(coll.size());
 		int index = 0;
