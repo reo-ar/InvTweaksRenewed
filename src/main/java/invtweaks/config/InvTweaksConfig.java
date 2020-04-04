@@ -378,7 +378,6 @@ public class InvTweaksConfig {
 	}
 	
 	public static class Ruleset {
-		@SuppressWarnings("unused")
 		private final List<String> rules;
 		private final Map<String, IntList> compiledRules = new LinkedHashMap<>();
 		private final IntList compiledFallbackRules = new IntArrayList(Utils.gridSpecToSlots("A1-D9", false));
@@ -407,6 +406,12 @@ public class InvTweaksConfig {
 		}
 		public Ruleset(String...rules) {
 			this(Arrays.asList(rules));
+		}
+		public Ruleset(Ruleset rules) {
+			this.rules = rules.rules;
+			this.compiledRules.putAll(rules.compiledRules);
+			this.compiledFallbackRules.clear();
+			this.compiledFallbackRules.addAll(rules.compiledFallbackRules);
 		}
 		
 		public IntList catToInventorySlots(String cat) {

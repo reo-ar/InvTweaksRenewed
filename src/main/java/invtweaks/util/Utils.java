@@ -9,6 +9,7 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.Streams;
 
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.inventory.container.*;
 import net.minecraft.item.*;
 //import net.minecraftforge.fml.common.*;
@@ -144,11 +145,14 @@ public class Utils {
 		return mapping.values().stream().flatMap(ls -> ls.stream()).collect(Collectors.toCollection(collSupp));
 	}
 	
+	/**
+	 * The {@code Set<Slot>} values' iterators are guarenteed to be {@code ListIterator}s.
+	 */
 	public static Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots(Iterable<Slot> iterable) {
 		return Streams.stream(iterable)
 				.collect(Collectors.groupingBy(sl -> STACKABLE.wrap(sl.getStack().copy()), // @#*! itemstack mutability
 						LinkedHashMap::new,
-						Collectors.toCollection(LinkedHashSet::new)));
+						Collectors.toCollection(ObjectLinkedOpenHashSet::new)));
 	}
 	
 	//@SuppressWarnings("unchecked")
