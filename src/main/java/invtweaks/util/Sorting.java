@@ -73,7 +73,7 @@ public class Sorting {
 						});
 						ListIterator<Slot> toIt = specificRulesSlots.listIterator();
 						
-						processCategoryClient(player, pc, gatheredSlots, stackWs, ent.getValue(), toIt);
+						Client.processCategoryClient(player, pc, gatheredSlots, stackWs, ent.getValue(), toIt);
 					}
 					
 					List<Slot> fallbackList = Stream.concat(
@@ -86,7 +86,7 @@ public class Sorting {
 							.mapToObj(indexToSlot::get)
 							.collect(Collectors.toList());
 					//System.out.println(Arrays.toString(fallbackList.stream().mapToInt(slot -> slot.getSlotIndex()).toArray()));
-					processCategoryClient(player, pc, gatheredSlots, stackWs, null, fallbackList.listIterator());
+					Client.processCategoryClient(player, pc, gatheredSlots, stackWs, null, fallbackList.listIterator());
 				});
 			} else {
 				List<ItemStack> stacks = Utils.condensed(() -> IntStream.range(0, inv.mainInventory.size())
@@ -178,7 +178,7 @@ public class Sorting {
 						ListIterator<Slot> toIt = validSlots.listIterator();
 						for (Equivalence.Wrapper<ItemStack> stackW: stackWs) {
 							BiMap<Slot, Slot> displaced = HashBiMap.create();
-							clientPushToSlots(player, pc, gatheredSlots.get(stackW).iterator(), toIt, displaced);
+							Client.clientPushToSlots(player, pc, gatheredSlots.get(stackW).iterator(), toIt, displaced);
 							for (Map.Entry<Slot, Slot> displacedPair: displaced.entrySet()) {
 								Set<Slot> toModify = gatheredSlots.get(Utils.STACKABLE.wrap(displacedPair.getValue().getStack()));
 								toModify.remove(displacedPair.getKey());
@@ -222,90 +222,97 @@ public class Sorting {
 			}
 		}
 	}
-
-	private static void processCategoryClient(PlayerEntity player, PlayerController pc,
-			Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots, List<Equivalence.Wrapper<ItemStack>> stackWs,
-			InvTweaksConfig.Category cat, ListIterator<Slot> toIt) {
-		List<Equivalence.Wrapper<ItemStack>> subStackWs = cat == null 
-				? new ArrayList<>(stackWs) : stackWs.stream()
-		.filter(stackW -> cat.checkStack(stackW.get()) >= 0)
-		.sorted(Comparator.comparingInt(stackW -> cat.checkStack(stackW.get())))
-		.collect(Collectors.toList());
-		
-		Iterator<Equivalence.Wrapper<ItemStack>> sswIt = subStackWs.iterator();
-		while (sswIt.hasNext()) {
-			Equivalence.Wrapper<ItemStack> stackW = sswIt.next();
-			if (cat == null || cat.checkStack(stackW.get()) >= 0) {
-				BiMap<Slot, Slot> displaced = HashBiMap.create();
-				ListIterator<Slot> fromIt = (ListIterator<Slot>)gatheredSlots.get(stackW).iterator();
-				boolean fullInserted = clientPushToSlots(player, pc, fromIt, toIt, displaced);
-				for (Map.Entry<Slot, Slot> displacedPair: displaced.entrySet()) {
-					Equivalence.Wrapper<ItemStack> displacedW = Utils.STACKABLE.wrap(displacedPair.getValue().getStack());
-					Set<Slot> toModify = gatheredSlots.get(displacedW);
-					toModify.remove(displacedPair.getKey());
-					toModify.add(displacedPair.getValue());
-				}
-				//System.out.println(gatheredSlots.get(stackW).size());
-				//System.out.println("HAS_PREV: "+fromIt.hasPrevious());
-				if (!fullInserted) fromIt.previous();
-				while (fromIt.hasPrevious()) {
-					fromIt.previous(); fromIt.remove();
-				}
-				//System.out.println(gatheredSlots.get(stackW).size());
-				if (!toIt.hasNext()) break;
-				toIt.next();
-			}
-		}
-		stackWs.removeIf(sw -> gatheredSlots.get(sw).isEmpty());
-		gatheredSlots.values().removeIf(set -> set.isEmpty());
-	}
 	
 	/**
-	 * 
-	 * Transfers the items from a specified sequence of slots to a specified
-	 * sequence of slots, possibly displacing existing items.
-	 * 
-	 * @param ent
-	 * @param pc
-	 * @param from 
-	 * @param to
-	 * @param displaced mapping from slot formerly containing existing item -> new slot of existing item
-	 * 
-	 * @return whether the item preceding fromIt has been fully pushed
-	 * 
+	 * This prevents the functions below from accidentally being loaded on the server.
 	 */
-	public static boolean clientPushToSlots(PlayerEntity player, PlayerController pc, Iterator<Slot> fromIt, ListIterator<Slot> to, BiMap<Slot, Slot> displaced) {
-		if (!to.hasNext()) return true;
-		boolean didCompleteCurrent = true;
-		while (fromIt.hasNext()) {
-			didCompleteCurrent = false;
-			Slot slot = fromIt.next();
-			pc.windowClick(player.openContainer.windowId,
-					slot.slotNumber, 0, ClickType.PICKUP, player);
-			Slot toSlot = null;
-			while (to.hasNext()) {
-				toSlot = to.next();
-				pc.windowClick(player.openContainer.windowId,
-						toSlot.slotNumber, 0, ClickType.PICKUP, player);
-				if (player.inventory.getItemStack().isEmpty()) {
-					didCompleteCurrent = true;
-					break;
+	static class Client {
+
+		static void processCategoryClient(PlayerEntity player, PlayerController pc,
+				Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots, List<Equivalence.Wrapper<ItemStack>> stackWs,
+				InvTweaksConfig.Category cat, ListIterator<Slot> toIt) {
+			List<Equivalence.Wrapper<ItemStack>> subStackWs = cat == null 
+					? new ArrayList<>(stackWs) : stackWs.stream()
+			.filter(stackW -> cat.checkStack(stackW.get()) >= 0)
+			.sorted(Comparator.comparingInt(stackW -> cat.checkStack(stackW.get())))
+			.collect(Collectors.toList());
+			
+			Iterator<Equivalence.Wrapper<ItemStack>> sswIt = subStackWs.iterator();
+			while (sswIt.hasNext()) {
+				Equivalence.Wrapper<ItemStack> stackW = sswIt.next();
+				if (cat == null || cat.checkStack(stackW.get()) >= 0) {
+					BiMap<Slot, Slot> displaced = HashBiMap.create();
+					ListIterator<Slot> fromIt = (ListIterator<Slot>)gatheredSlots.get(stackW).iterator();
+					boolean fullInserted = Client.clientPushToSlots(player, pc, fromIt, toIt, displaced);
+					for (Map.Entry<Slot, Slot> displacedPair: displaced.entrySet()) {
+						Equivalence.Wrapper<ItemStack> displacedW = Utils.STACKABLE.wrap(displacedPair.getValue().getStack());
+						Set<Slot> toModify = gatheredSlots.get(displacedW);
+						toModify.remove(displacedPair.getKey());
+						toModify.add(displacedPair.getValue());
+					}
+					//System.out.println(gatheredSlots.get(stackW).size());
+					//System.out.println("HAS_PREV: "+fromIt.hasPrevious());
+					if (!fullInserted) fromIt.previous();
+					while (fromIt.hasPrevious()) {
+						fromIt.previous(); fromIt.remove();
+					}
+					//System.out.println(gatheredSlots.get(stackW).size());
+					if (!toIt.hasNext()) break;
+					toIt.next();
 				}
+			}
+			stackWs.removeIf(sw -> gatheredSlots.get(sw).isEmpty());
+			gatheredSlots.values().removeIf(set -> set.isEmpty());
+		}
+
+		/**
+		 * 
+		 * Transfers the items from a specified sequence of slots to a specified
+		 * sequence of slots, possibly displacing existing items.
+		 * 
+		 * @param ent
+		 * @param pc
+		 * @param from 
+		 * @param to
+		 * @param displaced mapping from slot formerly containing existing item -> new slot of existing item
+		 * 
+		 * @return whether the item preceding fromIt has been fully pushed
+		 * 
+		 */
+		static boolean clientPushToSlots(PlayerEntity player, PlayerController pc, Iterator<Slot> fromIt, ListIterator<Slot> to, BiMap<Slot, Slot> displaced) {
+			if (!to.hasNext()) return true;
+			boolean didCompleteCurrent = true;
+			while (fromIt.hasNext()) {
+				didCompleteCurrent = false;
+				Slot slot = fromIt.next();
 				pc.windowClick(player.openContainer.windowId,
 						slot.slotNumber, 0, ClickType.PICKUP, player);
-				if (slot.getHasStack() && !ItemHandlerHelper.canItemStacksStack(slot.getStack(), toSlot.getStack())) {
-					didCompleteCurrent = true;
-					displaced.put(toSlot, slot);
+				Slot toSlot = null;
+				while (to.hasNext()) {
+					toSlot = to.next();
+					pc.windowClick(player.openContainer.windowId,
+							toSlot.slotNumber, 0, ClickType.PICKUP, player);
+					if (player.inventory.getItemStack().isEmpty()) {
+						didCompleteCurrent = true;
+						break;
+					}
+					pc.windowClick(player.openContainer.windowId,
+							slot.slotNumber, 0, ClickType.PICKUP, player);
+					if (slot.getHasStack() && !ItemHandlerHelper.canItemStacksStack(slot.getStack(), toSlot.getStack())) {
+						didCompleteCurrent = true;
+						displaced.put(toSlot, slot);
+						break;
+					}
+				}
+				if (!to.hasNext() && Optional.ofNullable(toSlot)
+						.filter(s -> s.getStack().getCount() >= Math.min(s.getSlotStackLimit(), s.getStack().getMaxStackSize()))
+						.isPresent()) {
 					break;
 				}
+				to.previous();
 			}
-			if (!to.hasNext() && Optional.ofNullable(toSlot)
-					.filter(s -> s.getStack().getCount() >= Math.min(s.getSlotStackLimit(), s.getStack().getMaxStackSize()))
-					.isPresent()) {
-				break;
-			}
-			to.previous();
+			return didCompleteCurrent;
 		}
-		return didCompleteCurrent;
+		
 	}
 }

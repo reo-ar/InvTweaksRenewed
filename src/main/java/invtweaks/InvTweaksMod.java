@@ -105,7 +105,10 @@ public class InvTweaksMod {
 	private static final Object clientOnlyL = new Object();
 	
 	public static boolean clientOnly() {
-		synchronized (clientOnlyL) { return clientOnly; }
+		synchronized (clientOnlyL) {
+			//System.out.println(clientOnly);
+			return clientOnly;
+		}
 	}
 	
 	public static void requestSort(boolean isPlayer) {
