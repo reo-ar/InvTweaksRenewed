@@ -180,7 +180,7 @@ public class Sorting {
 							BiMap<Slot, Slot> displaced = HashBiMap.create();
 							Client.clientPushToSlots(player, pc, gatheredSlots.get(stackW).iterator(), toIt, displaced);
 							for (Map.Entry<Slot, Slot> displacedPair: displaced.entrySet()) {
-								System.out.println(displacedPair.getKey() + " " + displacedPair.getValue());
+								//System.out.println(displacedPair.getKey() + " " + displacedPair.getValue());
 								Set<Slot> toModify = gatheredSlots.get(Utils.STACKABLE.wrap(displacedPair.getValue().getStack()));
 								toModify.remove(displacedPair.getKey());
 								toModify.add(displacedPair.getValue());
