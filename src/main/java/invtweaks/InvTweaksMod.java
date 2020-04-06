@@ -113,7 +113,8 @@ public class InvTweaksMod {
 	
 	public static void requestSort(boolean isPlayer) {
 		if (clientOnly()) {
-			Sorting.executeSort(Minecraft.getInstance().player, isPlayer);
+			DistExecutor.runWhenOn(Dist.CLIENT, () -> () ->
+				Sorting.executeSort(Minecraft.getInstance().player, isPlayer));
 		} else {
 			NET_INST.sendToServer(new PacketSortInv(isPlayer));
 		}
