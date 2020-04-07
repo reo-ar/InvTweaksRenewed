@@ -198,11 +198,12 @@ public class Sorting {
 					
 					Iterator<Slot> slotIt = validSlots.iterator();
 					for (int i=0; i<stacks.size(); ++i) {
+						Slot cur = null;
 						while (slotIt.hasNext()
-								&& !slotIt.next().isItemValid(stacks.get(i))) {
+								&& !(cur = slotIt.next()).isItemValid(stacks.get(i))) {
 							// do nothing
 						}
-						if (!slotIt.hasNext()) {
+						if (cur == null || !cur.isItemValid(stacks.get(i))) {
 							return; // nope right out of the sort
 						}
 					}
