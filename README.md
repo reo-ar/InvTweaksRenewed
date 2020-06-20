@@ -1,6 +1,6 @@
 # Inventory Tweaks Reborn
 
-A spiritual successor of Inventory Tweaks, for 1.15and later.
+A spiritual successor of Inventory Tweaks, for 1.15 and later.
 
 Credited to https://github.com/Landmaster
 
