@@ -305,10 +305,6 @@ public class InvTweaksMod {
 				}
 			});
 		}
-		if (event.getEntity() instanceof PlayerEntity
-				&& UUID.fromString("0b8d4b8b-dd2c-4f59-9e47-b35ee9e46b89").equals(((PlayerEntity)event.getEntity()).getUniqueID())) {
-			event.setCanceled(true);
-		}
 	}
 	
 	private void searchForSubstitute(PlayerEntity ent, Hand hand, Item item) {
