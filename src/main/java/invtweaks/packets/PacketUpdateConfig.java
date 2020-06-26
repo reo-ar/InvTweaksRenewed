@@ -56,10 +56,10 @@ public class PacketUpdateConfig {
 	
 	public void handle(Supplier<NetworkEvent.Context> ctx) {
 		ctx.get().enqueueWork(() -> {
-			InvTweaksConfig.setPlayerCats(ctx.get().getSender(), InvTweaksConfig.cfgToCompiledCats(cats));
-			InvTweaksConfig.setPlayerRules(ctx.get().getSender(), new InvTweaksConfig.Ruleset(rules));
+			InvTweaksConfig.setPlayerCats(Objects.requireNonNull(ctx.get().getSender()), InvTweaksConfig.cfgToCompiledCats(cats));
+			InvTweaksConfig.setPlayerRules(Objects.requireNonNull(ctx.get().getSender()), new InvTweaksConfig.Ruleset(rules));
 			InvTweaksConfig.setPlayerAutoRefill(ctx.get().getSender(), autoRefill);
-			InvTweaksConfig.setPlayerContOverrides(ctx.get().getSender(), InvTweaksConfig.cfgToCompiledContOverrides(contOverrides));
+			InvTweaksConfig.setPlayerContOverrides(Objects.requireNonNull(ctx.get().getSender()), InvTweaksConfig.cfgToCompiledContOverrides(contOverrides));
 			//InvTweaksMod.LOGGER.info("Received config from client!");
 		});
 		ctx.get().setPacketHandled(true);

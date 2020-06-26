@@ -16,21 +16,20 @@ modId="invtweaks" #mandatory
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
 version="${version}" #mandatory
  # A display name for the mod
-displayName="Inventory Tweaks Reborn" #mandatory
+displayName="Inventory Tweaks Renewed" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>
 # updateJSONURL="http://myurl.me/" #TODO add?
 # A URL for the "homepage" for this mod, displayed in the mod UI
-displayURL="https://www.curseforge.com/minecraft/mc-mods/it-reborn"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/inventory-tweaks-renewed"
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="logo.png"
 # A text field displayed in the mod UI
-credits="JimeoWan for being the original creator of this mod, and Kobata for maintaining it until 1.12.2"
+credits="JimeoWan, Kobata"
 # A text field displayed in the mod UI
-authors="Landmaster (phuong0429)"
+authors="Yuitakaa(Maintainer), Landmaster (Original Author)"
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-Sick and tired of inventory clutter? Then this mod is for you!
-Customizable sorting + fast tool swaps
+Inventory Tweaks, but for modern versions of Minecraft.
 '''
 # A dependency - use the . to indicate dependency for a specific modid. Dependencies are optional.
 [[dependencies.invtweaks]] #optional

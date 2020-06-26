@@ -7,7 +7,7 @@ import net.minecraft.network.*;
 import net.minecraftforge.fml.network.*;
 
 public class PacketSortInv {
-	private boolean isPlayer;
+	private final boolean isPlayer;
 	
 	public PacketSortInv(boolean isPlayer) { this.isPlayer = isPlayer; }
 	public PacketSortInv(PacketBuffer buf) {

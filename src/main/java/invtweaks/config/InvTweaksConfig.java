@@ -33,15 +33,15 @@ import net.minecraftforge.fml.config.*;
 public class InvTweaksConfig {
 	public static final ForgeConfigSpec CLIENT_CONFIG;
 	
-	private static ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
+	private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
 	
-	private static ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
+	private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
 	
-	private static ForgeConfigSpec.BooleanValue ENABLE_AUTOREFILL;
+	private static final ForgeConfigSpec.BooleanValue ENABLE_AUTOREFILL;
 	
-	private static ForgeConfigSpec.IntValue ENABLE_SORT;
+	private static final ForgeConfigSpec.IntValue ENABLE_SORT;
 	
-	private static ForgeConfigSpec.IntValue ENABLE_BUTTONS;
+	private static final ForgeConfigSpec.IntValue ENABLE_BUTTONS;
 	
 	/**
 	 * Sentinel to indicate that the GUI position should be left alone.
@@ -53,7 +53,7 @@ public class InvTweaksConfig {
 	// containerClass
 	// x, y
 	// sortRange
-	private static ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CONT_OVERRIDES;
+	private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CONT_OVERRIDES;
 	
 	public static final Map<String, Category> DEFAULT_CATS = ImmutableMap.<String, Category>builder()
 			.put("sword", new Category("/instanceof:net.minecraft.item.SwordItem"))
@@ -67,7 +67,7 @@ public class InvTweaksConfig {
 							Items.POISONOUS_POTATO.getRegistryName(),
 							Items.PUFFERFISH.getRegistryName())
 					))
-			.put("torch", new Category(Items.TORCH.getRegistryName().toString()))
+			.put("torch", new Category(Objects.requireNonNull(Items.TORCH.getRegistryName()).toString()))
 			.put("cheapBlocks", new Category("/tag:forge:cobblestone", "/tag:forge:dirt"))
 			.put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
 			.build();

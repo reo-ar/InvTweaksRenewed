@@ -8,8 +8,9 @@ import net.minecraftforge.fml.client.gui.*;
 import net.minecraftforge.fml.client.gui.widget.*;
 
 public class InvTweaksButton extends ExtendedButton {
-	private ResourceLocation tex;
-	private int tx, ty;
+	private final ResourceLocation tex;
+	private final int tx;
+	private final int ty;
 	
 	protected static final ResourceLocation BUTTON_SPRITES = new ResourceLocation(InvTweaksMod.MODID, "textures/gui/button_sprites.png");
 	
@@ -31,7 +32,6 @@ public class InvTweaksButton extends ExtendedButton {
 			throw new RuntimeException(e);
 		}*/
 		if (visible) {
-			//System.out.println("Meh!");
 			mc.textureManager.bindTexture(tex);
 			GuiUtils.drawTexturedModalRect(
 					x, y, tx, ty,

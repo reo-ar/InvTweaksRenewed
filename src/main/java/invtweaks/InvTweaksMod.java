@@ -207,7 +207,7 @@ public class InvTweaksMod {
 					.get(contClass);
 			
 			if (!(event.getGui() instanceof DisplayEffectsScreen) && !Optional.ofNullable(override)
-					.filter(or -> or.isSortDisabled())
+					.filter(InvTweaksConfig.ContOverride::isSortDisabled)
 					.isPresent()) {
 				int x = InvTweaksConfig.NO_POS_OVERRIDE, y = InvTweaksConfig.NO_POS_OVERRIDE;
 				if (override != null) {
@@ -257,8 +257,8 @@ public class InvTweaksMod {
 				.thenComparingInt(s -> -s.yPos)).orElse(null);
 	}
 	
-	private Map<PlayerEntity, EnumMap<Hand, Item>> itemsCache = new WeakHashMap<>();
-	private Map<PlayerEntity, Object2IntMap<Item>> usedCache = new WeakHashMap<>();
+	private final Map<PlayerEntity, EnumMap<Hand, Item>> itemsCache = new WeakHashMap<>();
+	private final Map<PlayerEntity, Object2IntMap<Item>> usedCache = new WeakHashMap<>();
 	
 	@SubscribeEvent
 	public void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -401,7 +401,8 @@ public class InvTweaksMod {
 					.map(IntArrayList::new) // prevent modification
 					.orElseGet(IntArrayList::new);
 			frozen.sort(null);
-			
+
+			assert ent != null;
 			if (Collections.binarySearch(frozen, ent.inventory.currentItem) >= 0) {
 				return;
 			}
@@ -417,9 +418,9 @@ public class InvTweaksMod {
 			}
 			int itemCount = IntStream.range(0, ent.inventory.mainInventory.size())
 					.filter(idx -> Collections.binarySearch(frozen, idx) < 0)
-					.mapToObj(idx -> ent.inventory.mainInventory.get(idx))
+					.mapToObj(ent.inventory.mainInventory::get)
 					.filter(st -> ItemHandlerHelper.canItemStacksStack(st, ent.getHeldItemMainhand()))
-					.mapToInt(st -> st.getCount())
+					.mapToInt(ItemStack::getCount)
 					.sum();
 			if (itemCount > ent.getHeldItemMainhand().getCount()) {
 				ItemStack toRender = ent.getHeldItemMainhand().copy();
