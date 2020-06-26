@@ -1,4 +1,4 @@
-# Inventory Tweaks Reborn
+# Inventory Tweaks Renewed
 
 A spiritual successor of Inventory Tweaks, for 1.15 and later.
 
