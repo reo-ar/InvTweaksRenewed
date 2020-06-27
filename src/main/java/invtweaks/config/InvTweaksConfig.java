@@ -19,7 +19,6 @@ import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.client.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.item.*;
-import net.minecraft.tags.*;
 import net.minecraft.util.*;
 import net.minecraft.util.concurrent.*;
 import net.minecraftforge.api.distmarker.*;
@@ -247,25 +246,25 @@ public class InvTweaksConfig {
 	}
 	
 	public static Map<String, Category> getPlayerCats(PlayerEntity ent) {
-		if (DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
+		if (DistExecutor.safeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
 			return getSelfCompiledCats();
 		}
 		return playerToCats.getOrDefault(ent.getUniqueID(), DEFAULT_CATS);
 	}
 	public static Ruleset getPlayerRules(PlayerEntity ent) {
-		if (DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
+		if (DistExecutor.safeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
 			return getSelfCompiledRules();
 		}
 		return playerToRules.getOrDefault(ent.getUniqueID(), DEFAULT_RULES);
 	}
 	public static boolean getPlayerAutoRefill(PlayerEntity ent) {
-		if (DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
+		if (DistExecutor.safeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
 			return ENABLE_AUTOREFILL.get();
 		}
-		return playerAutoRefill.contains(ent.getUniqueID());
+		return !playerAutoRefill.contains(ent.getUniqueID());
 	}
 	public static Map<String, ContOverride> getPlayerContOverrides(PlayerEntity ent) {
-		if (DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
+		if (DistExecutor.safeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
 			return getSelfCompiledContOverrides();
 		}
 		return playerToContOverrides.getOrDefault(ent.getUniqueID(), DEFAULT_CONT_OVERRIDES);
@@ -328,7 +327,7 @@ public class InvTweaksConfig {
 			}
 			
 			String[] parts = clause.split(":", 2);
-			if (parts[0].equals("/tag")) { // F to pay respects to oredict
+			/*if (parts[0].equals("/tag")) { // F to pay respects to oredict
 				return Optional.of(
 						st -> (
 								Optional.ofNullable(ItemTags.getCollection().get(new ResourceLocation(parts[1])))
@@ -340,7 +339,7 @@ public class InvTweaksConfig {
 										.filter(tg -> tg.contains(((BlockItem)st.getItem()).getBlock()))
 										.isPresent())
 						));
-			} else if (parts[0].equals("/instanceof") || parts[0].equals("/class")) { // use this for e.g. pickaxes
+			} else*/ if (parts[0].equals("/instanceof") || parts[0].equals("/class")) { // use this for e.g. pickaxes
 				try {
 					Class<?> clazz = Class.forName(parts[1]);
 					if (parts[0].equals("/instanceof")) {
@@ -349,14 +348,14 @@ public class InvTweaksConfig {
 						return Optional.of(st -> st.getItem().getClass().equals(clazz));
 					}
 				} catch (ClassNotFoundException e) {
-					InvTweaksMod.LOGGER.warn("Class %s not found! Ignoring clause", parts[1]);
+					InvTweaksMod.LOGGER.warn("Class not found! Ignoring clause");
 					return Optional.empty();
 				}
 			} else {// default to standard item checking
 				try {
 					return Optional.of(st -> Objects.equals(st.getItem().getRegistryName(), new ResourceLocation(clause)));
 				} catch (ResourceLocationException e) {
-					InvTweaksMod.LOGGER.warn("Invalid item resource location: %s", clause);
+					InvTweaksMod.LOGGER.warn("Invalid item resource location found.");
 					return Optional.empty();
 				}
 			}

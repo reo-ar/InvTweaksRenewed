@@ -36,30 +36,30 @@ public class Sorting {
 			PlayerInventory inv = player.inventory;
 			
 			if (player.world.isRemote) {
-				DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
+				DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () -> {
 					PlayerController pc = Minecraft.getInstance().playerController;
 					Int2ObjectMap<Slot> indexToSlot = player.openContainer.inventorySlots
 							.stream()
 							.filter(slot -> slot.inventory instanceof PlayerInventory)
 							.filter(slot -> 0 <= slot.getSlotIndex() && slot.getSlotIndex() < 36)
 							.collect(Collectors.toMap(Slot::getSlotIndex, Function.identity(), (u, v) -> u, Int2ObjectOpenHashMap::new));
-					
+
 					IntList stackIdxs = IntStream.range(0, inv.mainInventory.size())
 							.filter(idx -> Collections.binarySearch(lockedSlots, idx) < 0)
 							.filter(idx -> !inv.mainInventory.get(idx).isEmpty())
 							.collect(IntArrayList::new, IntList::add, IntList::addAll);
 					Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots = Utils.gatheredSlots(() ->
-						stackIdxs.stream()
-						.mapToInt(v -> v)
-						.mapToObj(indexToSlot::get)
-						.filter(Slot::getHasStack).iterator());
+							stackIdxs.stream()
+									.mapToInt(v -> v)
+									.mapToObj(indexToSlot::get)
+									.filter(Slot::getHasStack).iterator());
 					List<Equivalence.Wrapper<ItemStack>> stackWs = new ArrayList<>(gatheredSlots.keySet());
-					stackWs.sort(Comparator.comparing(w -> w.get(), Utils.FALLBACK_COMPARATOR));
-					
+					stackWs.sort(Comparator.comparing(Equivalence.Wrapper::get, Utils.FALLBACK_COMPARATOR));
+
 					//System.out.println("SZ: "+gatheredSlots.size());
-					for (Map.Entry<String, InvTweaksConfig.Category> ent: cats.entrySet()) {
+					for (Map.Entry<String, InvTweaksConfig.Category> ent : cats.entrySet()) {
 						//System.out.println(gatheredSlots.values().stream().flatMap(s -> s.stream()).count());
-						
+
 						IntList specificRules = rules.catToInventorySlots(ent.getKey());
 						if (specificRules == null) specificRules = IntLists.EMPTY_LIST;
 						specificRules = specificRules.stream()
@@ -68,18 +68,18 @@ public class Sorting {
 								.collect(IntArrayList::new, IntList::add, IntList::addAll);
 						//System.out.println(ent.getKey());
 						//System.out.println(specificRules);
-						List<Slot> specificRulesSlots = Lists.transform(specificRules, idx -> {
-							return indexToSlot.get((int)idx);
-						});
+						List<Slot> specificRulesSlots = specificRules.stream().map(idx -> {
+							return indexToSlot.get((int) idx);
+						}).collect(Collectors.toList());
 						ListIterator<Slot> toIt = specificRulesSlots.listIterator();
-						
+
 						Client.processCategoryClient(player, pc, gatheredSlots, stackWs, ent.getValue(), toIt);
 					}
-					
+
 					List<Slot> fallbackList = Stream.concat(
-						Streams.stream(Optional.ofNullable(rules.catToInventorySlots("/OTHER")))
-						.flatMap(List::stream),
-						rules.fallbackInventoryRules().stream()
+							Streams.stream(Optional.ofNullable(rules.catToInventorySlots("/OTHER")))
+									.flatMap(List::stream),
+							rules.fallbackInventoryRules().stream()
 					).mapToInt(v -> v)
 							.filter(idx -> Collections.binarySearch(lockedSlots, idx) < 0)
 							.distinct()
@@ -91,7 +91,7 @@ public class Sorting {
 			} else {
 				List<ItemStack> stacks = Utils.condensed(() -> IntStream.range(0, inv.mainInventory.size())
 						.filter(idx -> Collections.binarySearch(lockedSlots, idx) < 0)
-						.mapToObj(idx -> inv.mainInventory.get(idx))
+						.mapToObj(inv.mainInventory::get)
 						.filter(st -> !st.isEmpty())
 						.iterator());
 				stacks.sort(Utils.FALLBACK_COMPARATOR);
@@ -168,18 +168,18 @@ public class Sorting {
 						.collect(Collectors.toList());
 				
 				if (player.world.isRemote) {
-					DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
+					DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () -> {
 						PlayerController pc = Minecraft.getInstance().playerController;
 						Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots = Utils.gatheredSlots(() ->
-							validSlots.stream().filter(Slot::getHasStack).iterator());
+								validSlots.stream().filter(Slot::getHasStack).iterator());
 						List<Equivalence.Wrapper<ItemStack>> stackWs = new ArrayList<>(gatheredSlots.keySet());
-						stackWs.sort(Comparator.comparing(w -> w.get(), Utils.FALLBACK_COMPARATOR));
-						
+						stackWs.sort(Comparator.comparing(Equivalence.Wrapper::get, Utils.FALLBACK_COMPARATOR));
+
 						ListIterator<Slot> toIt = validSlots.listIterator();
-						for (Equivalence.Wrapper<ItemStack> stackW: stackWs) {
+						for (Equivalence.Wrapper<ItemStack> stackW : stackWs) {
 							BiMap<Slot, Slot> displaced = HashBiMap.create();
 							Client.clientPushToSlots(player, pc, gatheredSlots.get(stackW).iterator(), toIt, displaced);
-							for (Map.Entry<Slot, Slot> displacedPair: displaced.entrySet()) {
+							for (Map.Entry<Slot, Slot> displacedPair : displaced.entrySet()) {
 								//System.out.println(displacedPair.getKey() + " " + displacedPair.getValue());
 								Set<Slot> toModify = gatheredSlots.get(Utils.STACKABLE.wrap(displacedPair.getValue().getStack()));
 								toModify.remove(displacedPair.getKey());
@@ -191,19 +191,19 @@ public class Sorting {
 				} else {
 					if (!validSlots.iterator().hasNext()) return;
 					List<ItemStack> stacks = Utils.condensed(() -> validSlots.stream()
-							.map(slot -> slot.getStack())
+							.map(Slot::getStack)
 							.filter(st -> !st.isEmpty())
 							.iterator());
 					stacks.sort(Utils.FALLBACK_COMPARATOR);
 					
 					Iterator<Slot> slotIt = validSlots.iterator();
-					for (int i=0; i<stacks.size(); ++i) {
+					for (ItemStack stack : stacks) {
 						Slot cur = null;
 						while (slotIt.hasNext()
-								&& !(cur = slotIt.next()).isItemValid(stacks.get(i))) {
+								&& !(cur = slotIt.next()).isItemValid(stack)) {
 							// do nothing
 						}
-						if (cur == null || !cur.isItemValid(stacks.get(i))) {
+						if (cur == null || !cur.isItemValid(stack)) {
 							return; // nope right out of the sort
 						}
 					}
@@ -211,20 +211,21 @@ public class Sorting {
 					// execute sort
 					validSlots.forEach(slot -> slot.putStack(ItemStack.EMPTY));
 					slotIt = validSlots.iterator();
-					for (int i=0; i<stacks.size(); ++i) {
+					for (ItemStack stack : stacks) {
 						//System.out.println(i);
 						Slot cur = null;
 						while (slotIt.hasNext()
-								&& !(cur = slotIt.next()).isItemValid(stacks.get(i))) {
+								&& !(cur = slotIt.next()).isItemValid(stack)) {
 							// do nothing
 						}
-						cur.putStack(stacks.get(i));
+						assert cur != null;
+						cur.putStack(stack);
 					}
 				}
 			}
 		}
 	}
-	
+
 	/**
 	 * This prevents the functions below from accidentally being loaded on the server.
 	 */
@@ -238,15 +239,13 @@ public class Sorting {
 			.filter(stackW -> cat.checkStack(stackW.get()) >= 0)
 			.sorted(Comparator.comparingInt(stackW -> cat.checkStack(stackW.get())))
 			.collect(Collectors.toList());
-			
-			Iterator<Equivalence.Wrapper<ItemStack>> sswIt = subStackWs.iterator();
-			while (sswIt.hasNext()) {
-				Equivalence.Wrapper<ItemStack> stackW = sswIt.next();
+
+			for (Equivalence.Wrapper<ItemStack> stackW : subStackWs) {
 				if (cat == null || cat.checkStack(stackW.get()) >= 0) {
 					BiMap<Slot, Slot> displaced = HashBiMap.create();
-					ListIterator<Slot> fromIt = (ListIterator<Slot>)gatheredSlots.get(stackW).iterator();
+					ListIterator<Slot> fromIt = (ListIterator<Slot>) gatheredSlots.get(stackW).iterator();
 					boolean fullInserted = Client.clientPushToSlots(player, pc, fromIt, toIt, displaced);
-					for (Map.Entry<Slot, Slot> displacedPair: displaced.entrySet()) {
+					for (Map.Entry<Slot, Slot> displacedPair : displaced.entrySet()) {
 						Equivalence.Wrapper<ItemStack> displacedW = Utils.STACKABLE.wrap(displacedPair.getValue().getStack());
 						Set<Slot> toModify = gatheredSlots.get(displacedW);
 						toModify.remove(displacedPair.getKey());
@@ -256,7 +255,8 @@ public class Sorting {
 					//System.out.println("HAS_PREV: "+fromIt.hasPrevious());
 					if (!fullInserted) fromIt.previous();
 					while (fromIt.hasPrevious()) {
-						fromIt.previous(); fromIt.remove();
+						fromIt.previous();
+						fromIt.remove();
 					}
 					//System.out.println(gatheredSlots.get(stackW).size());
 					if (!toIt.hasNext()) break;
@@ -264,7 +264,7 @@ public class Sorting {
 				}
 			}
 			stackWs.removeIf(sw -> gatheredSlots.get(sw).isEmpty());
-			gatheredSlots.values().removeIf(set -> set.isEmpty());
+			gatheredSlots.values().removeIf(Set::isEmpty);
 		}
 
 		/**

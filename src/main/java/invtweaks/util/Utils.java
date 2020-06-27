@@ -141,12 +141,12 @@ public class Utils {
 	
 	public static <T extends Collection<ItemStack>> T collated(Iterable<ItemStack> iterable, Supplier<T> collSupp) {
 		Map<Equivalence.Wrapper<ItemStack>, List<ItemStack>> mapping = Streams.stream(iterable)
-				.collect(Collectors.groupingBy(st -> STACKABLE.wrap(st), LinkedHashMap::new, Collectors.toList()));
-		return mapping.values().stream().flatMap(ls -> ls.stream()).collect(Collectors.toCollection(collSupp));
+				.collect(Collectors.groupingBy(STACKABLE::wrap, LinkedHashMap::new, Collectors.toList()));
+		return mapping.values().stream().flatMap(Collection::stream).collect(Collectors.toCollection(collSupp));
 	}
 	
 	/**
-	 * The {@code Set<Slot>} values' iterators are guarenteed to be {@code ListIterator}s.
+	 * The {@code Set<Slot>} values' iterators are guaranteed to be {@code ListIterator}s.
 	 */
 	public static Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots(Iterable<Slot> iterable) {
 		return Streams.stream(iterable)

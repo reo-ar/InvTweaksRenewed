@@ -5,7 +5,7 @@ import invtweaks.*;
 public class InvTweaksButtonSort extends InvTweaksButton {
 
 	public InvTweaksButtonSort(int x, int y, boolean isPlayer) {
-		super(x, y, 0, 0, BUTTON_SPRITES, btn -> {
+		super(x, y, 0, 0, button, btn -> {
 			InvTweaksMod.requestSort(isPlayer);
 		});
 	}

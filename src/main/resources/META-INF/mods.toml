@@ -47,7 +47,7 @@ Inventory Tweaks, but for modern versions of Minecraft.
 [[dependencies.invtweaks]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.15.2]"
+    versionRange="[1.16.1]"
     ordering="NONE"
     side="BOTH"
 [[dependencies.invtweaks]]

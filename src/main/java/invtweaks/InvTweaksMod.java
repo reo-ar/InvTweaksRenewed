@@ -4,7 +4,6 @@ import net.minecraft.client.*;
 import net.minecraft.client.gui.*;
 import net.minecraft.client.gui.screen.*;
 import net.minecraft.client.gui.screen.inventory.*;
-import net.minecraft.client.gui.widget.*;
 import net.minecraft.client.settings.*;
 import net.minecraft.client.util.*;
 import net.minecraft.entity.player.*;
@@ -113,8 +112,8 @@ public class InvTweaksMod {
 	
 	public static void requestSort(boolean isPlayer) {
 		if (clientOnly()) {
-			DistExecutor.runWhenOn(Dist.CLIENT, () -> () ->
-				Sorting.executeSort(ClientUtils.safeGetPlayer(), isPlayer));
+			DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () ->
+					Sorting.executeSort(ClientUtils.safeGetPlayer(), isPlayer));
 		} else {
 			NET_INST.sendToServer(new PacketSortInv(isPlayer));
 		}
@@ -266,7 +265,7 @@ public class InvTweaksMod {
 			return;
 		}
 		if (event.side == LogicalSide.SERVER) {
-			if (!InvTweaksConfig.getPlayerAutoRefill(event.player)) {
+			if (InvTweaksConfig.getPlayerAutoRefill(event.player)) {
 				return;
 			}
 			EnumMap<Hand, Item> cached = itemsCache.computeIfAbsent(event.player, k -> new EnumMap<>(Hand.class));
@@ -299,7 +298,7 @@ public class InvTweaksMod {
 	@SubscribeEvent
 	public void onEntityJoin(EntityJoinWorldEvent event) {
 		if (event.getWorld().isRemote) {
-			DistExecutor.runWhenOn(Dist.CLIENT, () -> () -> {
+			DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () -> {
 				if (event.getEntity() == Minecraft.getInstance().player) {
 					InvTweaksConfig.setDirty(true);
 				}
@@ -338,7 +337,6 @@ public class InvTweaksMod {
 	public void keyInput(GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
 		if (event.getGui() instanceof ContainerScreen
 				&& !(event.getGui() instanceof CreativeScreen)
-				&& !(event.getGui().getFocused() instanceof TextFieldWidget)
 				&& !isJEIKeyboardActive()) {
 			//System.out.println(event.getGui().getFocused());
 			if (InvTweaksConfig.isSortEnabled(true) && keyBindings.get("sort_player")
@@ -382,17 +380,17 @@ public class InvTweaksMod {
 		}
 	}
 	
-	private static final Method renderHotbarItemM = DistExecutor.callWhenOn(Dist.CLIENT,
-			() -> () -> ObfuscationReflectionHelper.findMethod(
-					IngameGui.class, "func_184044_a", int.class, int.class, float.class, PlayerEntity.class, ItemStack.class
-					));
+	private static final Method renderHotbarItemM = DistExecutor.safeCallWhenOn(Dist.CLIENT,
+            () -> () -> ObfuscationReflectionHelper.findMethod(
+                    IngameGui.class, "func_184044_a", int.class, int.class, float.class, PlayerEntity.class, ItemStack.class
+            ));
 	
 	@OnlyIn(Dist.CLIENT)
 	@SubscribeEvent
 	public void renderOverlay(RenderGameOverlayEvent.Post event) {
 		if (event.getType() == RenderGameOverlayEvent.ElementType.HOTBAR) {
 			PlayerEntity ent = Minecraft.getInstance().player;
-			if (!InvTweaksConfig.getPlayerAutoRefill(ent)) {
+			if (InvTweaksConfig.getPlayerAutoRefill(ent)) {
 				return;
 			}
 			
