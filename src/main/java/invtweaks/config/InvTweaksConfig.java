@@ -33,25 +33,18 @@ public class InvTweaksConfig {
 	public static final ForgeConfigSpec CLIENT_CONFIG;
 	
 	private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
-	
 	private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
-	
 	private static final ForgeConfigSpec.BooleanValue ENABLE_AUTOREFILL;
-	
+	private static final ForgeConfigSpec.BooleanValue ENABLE_QUICKVIEW;
 	private static final ForgeConfigSpec.IntValue ENABLE_SORT;
-	
 	private static final ForgeConfigSpec.IntValue ENABLE_BUTTONS;
 	
 	/**
 	 * Sentinel to indicate that the GUI position should be left alone.
 	 */
 	public static final int NO_POS_OVERRIDE = -1418392593;
-	
 	public static final String NO_SPEC_OVERRIDE = "default";
-	
-	// containerClass
-	// x, y
-	// sortRange
+
 	private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CONT_OVERRIDES;
 	
 	public static final Map<String, Category> DEFAULT_CATS = ImmutableMap.<String, Category>builder()
@@ -78,14 +71,15 @@ public class InvTweaksConfig {
 	private static Map<String, Category> COMPILED_CATS = DEFAULT_CATS;
 	private static Ruleset COMPILED_RULES = DEFAULT_RULES;
 	private static Map<String, ContOverride> COMPILED_CONT_OVERRIDES = DEFAULT_CONT_OVERRIDES;
-	
+
 	static {
 		ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 		
 		{
 			builder.comment("Sorting customization").push("sorting");
 			
-			CATS = builder.comment(
+			CATS = builder
+					.comment(
 					"Categor(y/ies) for sorting",
 					"",
 					"name: the name of the category",
@@ -107,7 +101,8 @@ public class InvTweaksConfig {
 						return obj instanceof UnmodifiableConfig;
 					});
 			
-			RULES = builder.comment(
+			RULES = builder
+					.comment(
 					"Rules for sorting",
 					"Each element is of the form <POS> <CATEGORY>",
 					"A-D is the row from top to bottom",
@@ -128,7 +123,8 @@ public class InvTweaksConfig {
 					DEFAULT_RAW_RULES,
 					obj -> obj instanceof String);
 			
-			CONT_OVERRIDES = builder.comment(
+			CONT_OVERRIDES = builder
+					.comment(
 					"Custom settings per GUI",
 					"x = x-position of external sort button relative to GUI top left",
 					"y = same as above except for the y-position",
@@ -150,20 +146,27 @@ public class InvTweaksConfig {
 		{
 			builder.comment("Tweaks").push("tweaks");
 			
-			ENABLE_AUTOREFILL = builder.comment("Enable auto-refill").define("autoRefill", true);
-			ENABLE_SORT = builder.comment(
+			ENABLE_AUTOREFILL = builder
+					.comment("Enable auto-refill")
+					.define("autoRefill", true);
+			ENABLE_QUICKVIEW = builder
+					.comment("Enable a quick view of how many items that you're currently holding exists in your inventory by displaying it next your hotbar.")
+					.define("quickView", true);
+			ENABLE_SORT = builder
+					.comment(
 					"0 = disable sorting",
 					"1 = player sorting only",
 					"2 = external sorting only",
 					"3 = all sorting enabled (default)"
 					).defineInRange("enableSort", 3, 0, 3);
-			ENABLE_BUTTONS = builder.comment(
+			ENABLE_BUTTONS = builder
+					.comment(
 					"0 = disable buttons (i.e. keybind only)",
 					"1 = buttons for player sorting only",
 					"2 = buttons for external sorting only",
 					"3 = all buttons enabled (default)"
 					).defineInRange("enableButtons", 3, 0, 3);
-			
+
 			builder.pop();
 		}
 		
@@ -190,6 +193,7 @@ public class InvTweaksConfig {
 	}
 	
 	public static boolean isDirty() { return isDirty; }
+
 	@SuppressWarnings("unchecked")
 	public static void setDirty(boolean newVal) {
 		isDirty = newVal;
@@ -261,7 +265,7 @@ public class InvTweaksConfig {
 		if (DistExecutor.safeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
 			return ENABLE_AUTOREFILL.get();
 		}
-		return !playerAutoRefill.contains(ent.getUniqueID());
+		return playerAutoRefill.contains(ent.getUniqueID());
 	}
 	public static Map<String, ContOverride> getPlayerContOverrides(PlayerEntity ent) {
 		if (DistExecutor.safeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player) == Boolean.TRUE) {
@@ -269,7 +273,7 @@ public class InvTweaksConfig {
 		}
 		return playerToContOverrides.getOrDefault(ent.getUniqueID(), DEFAULT_CONT_OVERRIDES);
 	}
-	
+
 	public static boolean isSortEnabled(boolean isPlayerSort) {
 		return isFlagEnabled(ENABLE_SORT.get(), isPlayerSort);
 	}
@@ -279,7 +283,10 @@ public class InvTweaksConfig {
 	private static boolean isFlagEnabled(int flag, boolean isPlayer) {
 		return flag == 3 || flag == (isPlayer ? 1 : 2);
 	}
-	
+	public static boolean isQuickViewEnabled() {
+		return ENABLE_QUICKVIEW.get();
+	}
+
 	public static Map<String, Category> cfgToCompiledCats(List<UnmodifiableConfig> lst) {
 		Map<String, Category> catsMap = new LinkedHashMap<>();
 		for (UnmodifiableConfig subCfg: lst) {

@@ -171,10 +171,10 @@ public class InvTweaksMod {
 		server = null;
 	}
 	
-	private static final Field guiLeftF = DistExecutor.callWhenOn(Dist.CLIENT,
-			() -> () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147003_i"));
-	private static final Field guiTopF = DistExecutor.callWhenOn(Dist.CLIENT,
-			() -> () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147009_r"));
+	private static final Field guiLeftF = DistExecutor.safeCallWhenOn(Dist.CLIENT,
+            () -> () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147003_i"));
+	private static final Field guiTopF = DistExecutor.safeCallWhenOn(Dist.CLIENT,
+            () -> () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147009_r"));
 	
 	private static final Set<Screen> screensWithExtSort = Collections.newSetFromMap(new WeakHashMap<>());
 	
@@ -191,7 +191,7 @@ public class InvTweaksMod {
 			if (placement != null && InvTweaksConfig.isSortEnabled(true) && InvTweaksConfig.isButtonEnabled(true)) {
 				try {
 					event.addWidget(new InvTweaksButtonSort(
-							guiLeftF.getInt(event.getGui())+placement.xPos+16,
+							guiLeftF.getInt(event.getGui())+placement.xPos+17,
 							guiTopF.getInt(event.getGui())+placement.yPos,
 							true));
 				} catch (Exception e) {
@@ -217,7 +217,7 @@ public class InvTweaksMod {
 						slot -> !(slot.inventory instanceof PlayerInventory || slot.inventory instanceof CraftingInventory));
 				if (placement != null) {
 					if (x == InvTweaksConfig.NO_POS_OVERRIDE) {
-						x = placement.xPos + 16;
+						x = placement.xPos + 17;
 					}
 					if (y == InvTweaksConfig.NO_POS_OVERRIDE) {
 						y = placement.yPos;
@@ -265,7 +265,7 @@ public class InvTweaksMod {
 			return;
 		}
 		if (event.side == LogicalSide.SERVER) {
-			if (InvTweaksConfig.getPlayerAutoRefill(event.player)) {
+			if (!InvTweaksConfig.getPlayerAutoRefill(event.player)) {
 				return;
 			}
 			EnumMap<Hand, Item> cached = itemsCache.computeIfAbsent(event.player, k -> new EnumMap<>(Hand.class));
@@ -390,7 +390,8 @@ public class InvTweaksMod {
 	public void renderOverlay(RenderGameOverlayEvent.Post event) {
 		if (event.getType() == RenderGameOverlayEvent.ElementType.HOTBAR) {
 			PlayerEntity ent = Minecraft.getInstance().player;
-			if (InvTweaksConfig.getPlayerAutoRefill(ent)) {
+
+			if (!InvTweaksConfig.getPlayerAutoRefill(ent) ^ !InvTweaksConfig.isQuickViewEnabled()) {
 				return;
 			}
 			
