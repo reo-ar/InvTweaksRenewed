@@ -392,7 +392,7 @@ public class InvTweaksMod {
 	public void renderOverlay(RenderGameOverlayEvent.Post event) {
 		if (event.getType() == RenderGameOverlayEvent.ElementType.HOTBAR) {
 			PlayerEntity ent = Minecraft.getInstance().player;
-			if (!InvTweaksConfig.getPlayerAutoRefill(ent)) {
+			if (!InvTweaksConfig.getPlayerAutoRefill(ent) ^ !InvTweaksConfig.isQuickViewEnabled()) {
 				return;
 			}
 			

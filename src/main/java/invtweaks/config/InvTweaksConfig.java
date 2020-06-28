@@ -32,15 +32,11 @@ import net.minecraftforge.fml.config.*;
 @Mod.EventBusSubscriber(bus=Mod.EventBusSubscriber.Bus.MOD)
 public class InvTweaksConfig {
 	public static final ForgeConfigSpec CLIENT_CONFIG;
-	
 	private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
-	
 	private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
-	
 	private static final ForgeConfigSpec.BooleanValue ENABLE_AUTOREFILL;
-	
+	private static final ForgeConfigSpec.BooleanValue ENABLE_QUICKVIEW;
 	private static final ForgeConfigSpec.IntValue ENABLE_SORT;
-	
 	private static final ForgeConfigSpec.IntValue ENABLE_BUTTONS;
 	
 	/**
@@ -151,14 +147,21 @@ public class InvTweaksConfig {
 		{
 			builder.comment("Tweaks").push("tweaks");
 			
-			ENABLE_AUTOREFILL = builder.comment("Enable auto-refill").define("autoRefill", true);
-			ENABLE_SORT = builder.comment(
+			ENABLE_AUTOREFILL = builder
+					.comment("Enable auto-refill")
+					.define("autoRefill", true);
+			ENABLE_QUICKVIEW = builder
+					.comment("Enable a quick view of how many items that you're currently holding exists in your inventory by displaying it next your hotbar")
+					.define("quickView", true);
+			ENABLE_SORT = builder
+					.comment(
 					"0 = disable sorting",
 					"1 = player sorting only",
 					"2 = external sorting only",
 					"3 = all sorting enabled (default)"
 					).defineInRange("enableSort", 3, 0, 3);
-			ENABLE_BUTTONS = builder.comment(
+			ENABLE_BUTTONS = builder
+					.comment(
 					"0 = disable buttons (i.e. keybind only)",
 					"1 = buttons for player sorting only",
 					"2 = buttons for external sorting only",
@@ -279,6 +282,9 @@ public class InvTweaksConfig {
 	}
 	private static boolean isFlagEnabled(int flag, boolean isPlayer) {
 		return flag == 3 || flag == (isPlayer ? 1 : 2);
+	}
+	public static boolean isQuickViewEnabled() {
+		return ENABLE_QUICKVIEW.get();
 	}
 	
 	public static Map<String, Category> cfgToCompiledCats(List<UnmodifiableConfig> lst) {
