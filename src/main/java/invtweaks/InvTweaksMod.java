@@ -294,7 +294,7 @@ public class InvTweaksMod {
 			}
 		}
 	}
-	
+
 	@SubscribeEvent
 	public void onEntityJoin(EntityJoinWorldEvent event) {
 		if (event.getWorld().isRemote) {
@@ -390,11 +390,10 @@ public class InvTweaksMod {
 	public void renderOverlay(RenderGameOverlayEvent.Post event) {
 		if (event.getType() == RenderGameOverlayEvent.ElementType.HOTBAR) {
 			PlayerEntity ent = Minecraft.getInstance().player;
-
-			if (!InvTweaksConfig.getPlayerAutoRefill(ent) ^ !InvTweaksConfig.isQuickViewEnabled()) {
+			if (!InvTweaksConfig.isQuickViewEnabled()) {
 				return;
 			}
-			
+
 			InvTweaksConfig.Ruleset rules = InvTweaksConfig.getSelfCompiledRules();
 			IntList frozen = Optional.ofNullable(rules.catToInventorySlots("/FROZEN"))
 					.map(IntArrayList::new) // prevent modification

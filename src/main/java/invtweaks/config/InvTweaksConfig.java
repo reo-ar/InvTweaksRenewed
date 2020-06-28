@@ -19,6 +19,8 @@ import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.client.*;
 import net.minecraft.entity.player.*;
 import net.minecraft.item.*;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.util.*;
 import net.minecraft.util.concurrent.*;
 import net.minecraftforge.api.distmarker.*;
@@ -53,14 +55,14 @@ public class InvTweaksConfig {
 			.put("pickaxe", new Category("/instanceof:net.minecraft.item.PickaxeItem"))
 			.put("shovel", new Category("/instanceof:net.minecraft.item.ShovelItem"))
 			.put("acceptableFood", new Category(
-					String.format("/instanceof:net.minecraft.item.Food; !%s; !%s; !%s; !%s",
+					String.format("/instanceof:net.minecraft.item.Foods; !%s; !%s; !%s; !%s",
 							Items.ROTTEN_FLESH.getRegistryName(),
 							Items.SPIDER_EYE.getRegistryName(),
 							Items.POISONOUS_POTATO.getRegistryName(),
 							Items.PUFFERFISH.getRegistryName())
 					))
 			.put("torch", new Category(Objects.requireNonNull(Items.TORCH.getRegistryName()).toString()))
-			.put("cheapBlocks", new Category("/tag:forge:cobblestone", "/tag:forge:dirt"))
+			.put("cheapBlocks", new Category("/tag:minecraft:cobblestone", "/tag:minecraft:dirt"))
 			.put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
 			.build();
 	public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
@@ -334,19 +336,19 @@ public class InvTweaksConfig {
 			}
 			
 			String[] parts = clause.split(":", 2);
-			/*if (parts[0].equals("/tag")) { // F to pay respects to oredict
+			if (parts[0].equals("/tag")) {
 				return Optional.of(
 						st -> (
 								Optional.ofNullable(ItemTags.getCollection().get(new ResourceLocation(parts[1])))
-								.filter(tg -> tg.contains(st.getItem()))
+								.filter(tg -> st.getItem().isIn(tg))
 								.isPresent()
 								||
 								(st.getItem() instanceof BlockItem
 										&& Optional.ofNullable(BlockTags.getCollection().get(new ResourceLocation(parts[1])))
-										.filter(tg -> tg.contains(((BlockItem)st.getItem()).getBlock()))
+										.filter(tg -> ((BlockItem)st.getItem()).getBlock().isIn(tg))
 										.isPresent())
 						));
-			} else*/ if (parts[0].equals("/instanceof") || parts[0].equals("/class")) { // use this for e.g. pickaxes
+			} else if (parts[0].equals("/instanceof") || parts[0].equals("/class")) { // use this for e.g. pickaxes
 				try {
 					Class<?> clazz = Class.forName(parts[1]);
 					if (parts[0].equals("/instanceof")) {
