@@ -8,15 +8,13 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraftforge.fml.client.gui.widget.ExtendedButton;
 
 public class InvTweaksButton extends ExtendedButton {
-	private final ResourceLocation tex;
 	private final int tx;
 	private final int ty;
 
 	protected static final ResourceLocation button = new ResourceLocation(InvTweaksMod.MODID, "textures/gui/button_sprites.png");
 	
-	public InvTweaksButton(int x, int y, int tx, int ty, ResourceLocation tex, IPressable handler) {
-		super(x, y, 16, 16, new StringTextComponent(""), handler);
-		this.tex = tex;
+	public InvTweaksButton(int x, int y, int tx, int ty, IPressable handler) {
+		super(x, y, 14, 16, new StringTextComponent(""), handler);
 		this.tx = tx;
 		this.ty = ty;
 	}
@@ -31,6 +29,6 @@ public class InvTweaksButton extends ExtendedButton {
 		final int height = field_230689_k_;
 		field_230692_n_ = active && visible && mouseX >= x && mouseY >= y && mouseX < x + width && mouseY < y + height;
 		Minecraft.getInstance().getTextureManager().bindTexture(button);
-		func_238474_b_(matrixStack, x, y, tx, ty + (field_230692_n_ ? 12 : 0), 12,12);
+		func_238474_b_(matrixStack, x, y, tx, ty + (field_230692_n_ ? 16 : 0), 14,16);
 	}
 }
