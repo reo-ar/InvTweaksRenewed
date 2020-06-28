@@ -24,9 +24,9 @@ displayURL="https://www.curseforge.com/minecraft/mc-mods/inventory-tweaks-renewe
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="logo.png"
 # A text field displayed in the mod UI
-credits="JimeoWan, Kobata"
+credits="JimeoWan, Kobata for the original 1.12.2 mod"
 # A text field displayed in the mod UI
-authors="Yuitakaa(Maintainer), Landmaster (Original Author)"
+authors="Yuitakaa(Current Author), Landmaster (Original Author)"
 # The description text for the mod (multi line!) (#mandatory)
 description='''
 Inventory Tweaks, but for modern versions of Minecraft.
@@ -53,6 +53,6 @@ Inventory Tweaks, but for modern versions of Minecraft.
 [[dependencies.invtweaks]]
 	modId="jei"
 	mandatory=false
-	versionRange="[1.15.2-6.0.0.2,)"
+	versionRange="[jei-1.16.1-7.0.0.2,)"
 	ordering="AFTER"
 	side="BOTH"
