@@ -1,42 +1,38 @@
 package invtweaks.gui;
 
-import invtweaks.*;
-import net.minecraft.client.*;
-import net.minecraft.client.gui.widget.button.*;
-import net.minecraft.util.*;
-import net.minecraftforge.fml.client.gui.*;
-import net.minecraftforge.fml.client.gui.widget.*;
+import invtweaks.InvTweaksMod;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.widget.button.Button;
+import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fml.client.gui.GuiUtils;
+import net.minecraftforge.fml.client.gui.widget.ExtendedButton;
+
+import javax.annotation.ParametersAreNonnullByDefault;
 
 public class InvTweaksButton extends ExtendedButton {
-	private final ResourceLocation tex;
-	private final int tx;
-	private final int ty;
-	
-	protected static final ResourceLocation BUTTON_SPRITES = new ResourceLocation(InvTweaksMod.MODID, "textures/gui/button_sprites.png");
-	
-	public InvTweaksButton(int x, int y, int tx, int ty, ResourceLocation tex, Button.IPressable handler) {
-		super(x, y, 12, 12, "", handler);
-		this.tex = tex;
-		this.tx = tx;
-		this.ty = ty;
-	}
-	
-	//private static final Field tabPageF = ObfuscationReflectionHelper.findField(CreativeScreen.class, "tabPage");
-	
-	@Override
-	protected void renderBg(Minecraft mc, int mouseX, int mouseY) {
-		/*try {
-			visible = tabPageF.getInt(null) == ItemGroup.INVENTORY.getIndex();
-		} catch (Exception e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
-		}*/
-		if (visible) {
-			mc.textureManager.bindTexture(tex);
-			GuiUtils.drawTexturedModalRect(
-					x, y, tx, ty,
-					width, height,
-					this.getBlitOffset());
-		}
-	}
+    protected static final ResourceLocation button =
+            new ResourceLocation(InvTweaksMod.MODID, "textures/gui/button_sprites.png");
+    private final int tx;
+    private final int ty;
+
+    public InvTweaksButton(
+            int x, int y, int tx, int ty, IPressable handler) {
+        super(x, y, 12, 12, "", handler);
+        this.tx = tx;
+        this.ty = ty;
+    }
+
+    @Override
+    @ParametersAreNonnullByDefault
+    public void render(int mouseX, int mouseY, float partialTicks) {
+        isHovered =
+                this.active
+                && mouseX >= this.x
+                && mouseY >= this.y
+                && mouseX < this.x + this.width
+                && mouseY < this.y + this.height;
+        Minecraft.getInstance().getTextureManager().bindTexture(button);
+        blit(x,y,tx,ty+(isHovered?16:0),14,16);
+        }
+
 }
