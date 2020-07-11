@@ -196,6 +196,7 @@ public class Sorting {
         List<Slot> validSlots =
             (override != null && override.getSortRange() != null
                     ? override.getSortRange().stream()
+                        .filter(Objects::nonNull)
                         .filter(idx -> 0 <= idx && idx < cont.inventorySlots.size())
                         .map(cont.inventorySlots::get)
                     : cont.inventorySlots.stream())
@@ -214,7 +215,10 @@ public class Sorting {
                     PlayerController pc = Minecraft.getInstance().playerController;
                     Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots =
                         Utils.gatheredSlots(
-                            () -> validSlots.stream().filter(Slot::getHasStack).iterator());
+                            () -> validSlots.stream()
+                                    .filter(Objects::nonNull)
+                                    .filter(Slot::getHasStack)
+                                    .iterator());
                     List<Equivalence.Wrapper<ItemStack>> stackWs =
                         new ArrayList<>(gatheredSlots.keySet());
                     stackWs.sort(
@@ -226,8 +230,6 @@ public class Sorting {
                       Client.clientPushToSlots(
                           player, pc, gatheredSlots.get(stackW).iterator(), toIt, displaced);
                       for (Map.Entry<Slot, Slot> displacedPair : displaced.entrySet()) {
-                        // System.out.println(displacedPair.getKey() + " " +
-                        // displacedPair.getValue());
                         Set<Slot> toModify =
                             gatheredSlots.get(
                                 Utils.STACKABLE.wrap(displacedPair.getValue().getStack()));
@@ -244,6 +246,7 @@ public class Sorting {
                   () ->
                       validSlots.stream()
                           .map(Slot::getStack)
+                          .filter(Objects::nonNull)
                           .filter(st -> !st.isEmpty())
                           .iterator());
           stacks.sort(Utils.FALLBACK_COMPARATOR);

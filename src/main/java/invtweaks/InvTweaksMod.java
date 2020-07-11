@@ -19,6 +19,7 @@ import net.minecraft.client.gui.IngameGui;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.client.gui.screen.inventory.CreativeScreen;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.client.util.InputMappings;
 import net.minecraft.entity.player.PlayerEntity;
@@ -426,6 +427,7 @@ public class InvTweaksMod {
   public void keyInput(GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
     if (event.getGui() instanceof ContainerScreen
         && !(event.getGui() instanceof CreativeScreen)
+        && !(event.getGui().getFocused() instanceof TextFieldWidget)
         && !isJEIKeyboardActive()) {
       // System.out.println(event.getGui().getFocused());
       if (InvTweaksConfig.isSortEnabled(true)
