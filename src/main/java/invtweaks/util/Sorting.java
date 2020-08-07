@@ -318,69 +318,93 @@ public class Sorting {
     }
 
     /**
-     * Transfers the items from a specified sequence of slots to a specified sequence of slots,
-     * possibly displacing existing items.
+     * Transfers the items from a specified sequence of slots to a specified
+     * sequence of slots, possibly displacing existing items.
      *
-     * @param ent
-     * @param pc
-     * @param from
-     * @param to
-     * @param displaced mapping from slot formerly containing existing item -> new slot of existing
-     *     item
-     * @return whether the item preceding fromIt has been fully pushed
+     * @param player The player that is interacting with the sort
+     * @param playerController Controller so clicks can be sent to move items
+     * @param OriginIter The Slots from which the ItemStacks will be moved
+     * @param destinationIter The Slots to which the ItemStacks will be moved
+     * @param displaced BiMap to keep track of what Slots had their items
+     *                  swapped to make space for the items that needed to
+     *                  be moved.
+     * @return whether all items in OriginIter have been fully pushed
      */
-    static boolean clientPushToSlots(
-        PlayerEntity player,
-        PlayerController pc,
-        Iterator<Slot> fromIt,
-        ListIterator<Slot> to,
-        BiMap<Slot, Slot> displaced) {
-      if (!to.hasNext()) return true;
-      boolean didCompleteCurrent = true;
-      while (fromIt.hasNext()) {
-        didCompleteCurrent = false;
-        Slot slot = fromIt.next();
-        pc.windowClick(player.openContainer.windowId, slot.slotNumber, 0, ClickType.PICKUP, player);
-        Slot toSlot = null;
-        while (to.hasNext()) {
-          // if prev exists, isn't a full stack, and is stackable, we will try to place our stack there instead.
-          if (to.hasPrevious())
-          {
-            toSlot=to.previous();
-            if (toSlot.getStack().getMaxStackSize()==toSlot.getStack().getCount()
-                || !Utils.STACKABLE.equivalent(toSlot.getStack(),player.inventory.getItemStack()))
-              to.next();
+    static boolean clientPushToSlots(PlayerEntity player, PlayerController playerController, Iterator<Slot> OriginIter, ListIterator<Slot> destinationIter, BiMap<Slot, Slot> displaced) {
+      // There are no more spaces in the destination container to put items
+      if (!destinationIter.hasNext())
+        return true;
+
+      boolean completedCurrentItemSwap = true;
+
+      // Grab more items from the to-move list.
+      while (OriginIter.hasNext()) {
+        // Starting new iteration -> not done with this item
+        completedCurrentItemSwap = false;
+
+        // Where is the item coming from
+        Slot originSlot = OriginIter.next();
+        // Pick up the origin item
+        playerController.windowClick(player.openContainer.windowId, originSlot.slotNumber, 0, ClickType.PICKUP, player);
+
+        // Find next open slot in the container
+        Slot destinationSlot = null;
+        while (destinationIter.hasNext()) {
+          // Check previous stack; If can put this item there, then do
+          if (destinationIter.hasPrevious()) {
+            destinationSlot=destinationIter.previous();
+
+            // If the stack is not at max capacity AND can stack with the one that is held right now
+            if (destinationSlot.getStack().getCount()!=destinationSlot.getStack().getMaxStackSize()
+                && Utils.STACKABLE.equivalent(destinationSlot.getStack(),player.inventory.getItemStack())) {
+              // Stay on this current 'previous' slot (by doing nothing).
+            }
+
+            // Other wise advance back to where we should be.
+            else
+              destinationIter.next();
           }
-          toSlot = to.next();
-          pc.windowClick(
-              player.openContainer.windowId, toSlot.slotNumber, 0, ClickType.PICKUP, player);
+
+          // Where the held item will be going
+          destinationSlot = destinationIter.next();
+
+          // Place held item (from origin) in destination slot,
+          // picking up whatever was at destination, if it had anything.
+          // or adding to that stack, if we backed up because it was the same item.
+          // (possibly filling the stack and getting leftover ItemStack)
+          playerController.windowClick(player.openContainer.windowId, destinationSlot.slotNumber, 0, ClickType.PICKUP, player);
+
+          // Didnt pick anything up -> done
           if (player.inventory.getItemStack().isEmpty()) {
-            didCompleteCurrent = true;
+            completedCurrentItemSwap = true;
             break;
           }
-          // If its overflow from the current item, no need to swap it back to the starting position, just try the next slot.
-          if (Utils.STACKABLE.equivalent(toSlot.getStack(),player.inventory.getItemStack()))
-            continue;
-          pc.windowClick(
-              player.openContainer.windowId, slot.slotNumber, 0, ClickType.PICKUP, player);
-          if (slot.getHasStack()
-              && !ItemHandlerHelper.canItemStacksStack(slot.getStack(), toSlot.getStack())) {
-            didCompleteCurrent = true;
-            displaced.put(toSlot, slot);
-            break;
+
+          // Did pick something else up / have leftover item from topping off the stack
+          else {
+            // If its overflow from the current item, no need to swap it back to the starting position,
+            // just try the next slot.
+            if (Utils.STACKABLE.equivalent(destinationSlot.getStack(),player.inventory.getItemStack()))
+              continue;
+
+            // Else, this stack was picked up, and is being displaced...
+            // Click to put this item into the origin slot, which is guaranteed to be free
+            playerController.windowClick(player.openContainer.windowId, originSlot.slotNumber, 0, ClickType.PICKUP, player);
+
+            if (originSlot.getHasStack() && !ItemHandlerHelper.canItemStacksStack(originSlot.getStack(), destinationSlot.getStack())) {
+              // This iteration is now complete.
+              completedCurrentItemSwap = true;
+              // Remember that the item that was in destination is now moved to origin...
+              displaced.put(destinationSlot, originSlot);
+              break;
+            }
           }
         }
-        if (!to.hasNext()
-            && Optional.ofNullable(toSlot)
-                .filter(
-                    s ->
-                        s.getStack().getCount()
-                            >= Math.min(s.getSlotStackLimit(), s.getStack().getMaxStackSize()))
-                .isPresent()) {
+        if (!destinationIter.hasNext() && Optional.ofNullable(destinationSlot).filter(s -> s.getStack().getCount() >= Math.min(s.getSlotStackLimit(), s.getStack().getMaxStackSize())).isPresent()) {
           break;
         }
       }
-      return didCompleteCurrent;
+      return completedCurrentItemSwap;
     }
   }
 }
