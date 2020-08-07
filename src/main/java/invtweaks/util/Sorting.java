@@ -355,7 +355,7 @@ public class Sorting {
             destinationSlot=destinationIter.previous();
 
             // If the stack is not at max capacity AND can stack with the one that is held right now
-            if (destinationSlot.getStack().getCount()!=destinationSlot.getStack().getMaxStackSize()
+            if (destinationSlot.getStack().getCount()!=Math.min(destinationSlot.getSlotStackLimit(),destinationSlot.getStack().getMaxStackSize())
                 && Utils.STACKABLE.equivalent(destinationSlot.getStack(),player.inventory.getItemStack())) {
               // Stay on this current 'previous' slot (by doing nothing).
             }
