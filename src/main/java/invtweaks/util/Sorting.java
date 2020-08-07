@@ -236,7 +236,6 @@ public class Sorting {
                         toModify.remove(displacedPair.getKey());
                         toModify.add(displacedPair.getValue());
                       }
-                      toIt.next();
                     }
                   });
         } else {
@@ -311,14 +310,7 @@ public class Sorting {
           }
           // System.out.println(gatheredSlots.get(stackW).size());
           // System.out.println("HAS_PREV: "+fromIt.hasPrevious());
-          if (!fullInserted) fromIt.previous();
-          while (fromIt.hasPrevious()) {
-            fromIt.previous();
-            fromIt.remove();
-          }
           // System.out.println(gatheredSlots.get(stackW).size());
-          if (!toIt.hasNext()) break;
-          toIt.next();
         }
       }
       stackWs.removeIf(sw -> gatheredSlots.get(sw).isEmpty());
@@ -351,6 +343,14 @@ public class Sorting {
         pc.windowClick(player.openContainer.windowId, slot.slotNumber, 0, ClickType.PICKUP, player);
         Slot toSlot = null;
         while (to.hasNext()) {
+          // if prev exists, isn't a full stack, and is stackable, we will try to place our stack there instead.
+          if (to.hasPrevious())
+          {
+            toSlot=to.previous();
+            if (toSlot.getStack().getMaxStackSize()==toSlot.getStack().getCount()
+                || !Utils.STACKABLE.equivalent(toSlot.getStack(),player.inventory.getItemStack()))
+              to.next();
+          }
           toSlot = to.next();
           pc.windowClick(
               player.openContainer.windowId, toSlot.slotNumber, 0, ClickType.PICKUP, player);
@@ -358,6 +358,9 @@ public class Sorting {
             didCompleteCurrent = true;
             break;
           }
+          // If its overflow from the current item, no need to swap it back to the starting position, just try the next slot.
+          if (Utils.STACKABLE.equivalent(toSlot.getStack(),player.inventory.getItemStack()))
+            continue;
           pc.windowClick(
               player.openContainer.windowId, slot.slotNumber, 0, ClickType.PICKUP, player);
           if (slot.getHasStack()
@@ -376,7 +379,6 @@ public class Sorting {
                 .isPresent()) {
           break;
         }
-        to.previous();
       }
       return didCompleteCurrent;
     }
