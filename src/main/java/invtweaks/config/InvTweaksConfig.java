@@ -73,6 +73,8 @@ public class InvTweaksConfig {
             ImmutableMap.of(
                     "com.tfar.craftingstation.CraftingStationContainer",
                     new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""),
+                    "tfar.dankstorage.container.DankContainers",
+                    new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""),
                     "mcjty.rftoolsutility.modules.crafter.blocks.CrafterContainer",
                     new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""));
 
