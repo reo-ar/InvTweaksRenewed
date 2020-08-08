@@ -4,6 +4,7 @@
 # Note that there are a couple of TOML lists in this file.
 # Find more information on toml format here:  https://github.com/toml-lang/toml
 # The name of the mod loader type to load - for regular FML @Mod mods it should be javafml
+license="Apache License, Version 2.0"
 modLoader="javafml" #mandatory
 # A version range to match for said mod loader - for regular FML @Mod it will be the forge version
 loaderVersion="[31,)"
@@ -26,7 +27,7 @@ logoFile="logo.png"
 # A text field displayed in the mod UI
 credits="JimeoWan, Kobata for the original 1.12.2 mod"
 # A text field displayed in the mod UI
-authors="Yuitakaa(Current Author), Landmaster (Original Author)"
+authors="Yuitakaa(Maintainer), StanleyMines(Contributor), Landmaster (Original Author)"
 # The description text for the mod (multi line!) (#mandatory)
 description='''
 Inventory Tweaks, but for modern versions of Minecraft.

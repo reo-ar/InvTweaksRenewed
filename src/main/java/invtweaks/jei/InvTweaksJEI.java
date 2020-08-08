@@ -14,16 +14,16 @@ import javax.annotation.ParametersAreNonnullByDefault;
 @ParametersAreNonnullByDefault
 @MethodsReturnNonnullByDefault
 public class InvTweaksJEI implements IModPlugin {
-  public static final ResourceLocation UID = new ResourceLocation(InvTweaksMod.MODID, "jei_plugin");
+    public static final ResourceLocation UID = new ResourceLocation(InvTweaksMod.MODID, "jei_plugin");
 
-  @Override
-  public ResourceLocation getPluginUid() {
-    return UID;
-  }
+    @Override
+    public ResourceLocation getPluginUid() {
+        return UID;
+    }
 
-  @Override
-  public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
-    InvTweaksMod.setJEIKeyboardActiveFn(
-        () -> jeiRuntime.getIngredientListOverlay().hasKeyboardFocus());
-  }
+    @Override
+    public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
+        InvTweaksMod.setJEIKeyboardActiveFn(
+                () -> jeiRuntime.getIngredientListOverlay().hasKeyboardFocus());
+    }
 }
