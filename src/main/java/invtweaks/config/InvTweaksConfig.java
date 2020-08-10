@@ -190,7 +190,7 @@ public class InvTweaksConfig {
         executor.runAsync(() -> setDirty(true));
     }
 
-	@SuppressWarnings("unused")
+    @SuppressWarnings("unused")
     @SubscribeEvent
     public static void onReload(final ModConfig.Reloading configEvent) {
         ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
@@ -425,11 +425,12 @@ public class InvTweaksConfig {
             }
         }
 
-		@SuppressWarnings("unused")
+        @SuppressWarnings("unused")
         public Ruleset(String... rules) {
             this(Arrays.asList(rules));
         }
-		@SuppressWarnings("unused")
+
+        @SuppressWarnings("unused")
         public Ruleset(Ruleset rules) {
             this.rules = rules.rules;
             this.compiledRules.putAll(rules.compiledRules);
