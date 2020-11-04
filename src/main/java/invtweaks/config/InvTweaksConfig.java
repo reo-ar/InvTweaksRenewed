@@ -70,13 +70,15 @@ public class InvTweaksConfig {
     public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
     public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
     public static final Map<String, ContOverride> DEFAULT_CONT_OVERRIDES =
-            ImmutableMap.of(
-                    "com.tfar.craftingstation.CraftingStationContainer",
-                    new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""),
-                    "tfar.dankstorage.container.DankContainers",
-                    new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""),
-                    "mcjty.rftoolsutility.modules.crafter.blocks.CrafterContainer",
-                    new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""));
+            ImmutableMap.<String, ContOverride>builder()
+                    .put("com.tfar.craftingstation.CraftingStationContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("tfar.dankstorage.container.DankContainers", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE,""))
+                    .put("mcjty.rftoolsutility.modules.crafter.blocks.CrafterContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("appeng.container.implementations.InterfaceTerminalContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("appeng.container.implementations.CraftingTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("appeng.container.implementations.PatternTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("appeng.container.implementations.WirelessTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .build();
 
     private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
