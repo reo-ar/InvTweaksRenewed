@@ -78,6 +78,8 @@ public class InvTweaksConfig {
                     .put("appeng.container.implementations.CraftingTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("appeng.container.implementations.PatternTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("appeng.container.implementations.WirelessTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("net.blay09.mods.excompressum.container.AutoSieveContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+
                     .build();
 
     private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
