@@ -79,6 +79,7 @@ public class InvTweaksConfig {
                     .put("appeng.container.implementations.PatternTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("appeng.container.implementations.WirelessTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("net.blay09.mods.excompressum.container.AutoSieveContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("slimeknights.tconstruct.tables.inventory.table.CraftingStationContainer", new ContOverride(NO_POS_OVERRIED, NO_POS_OVERRIDE, ""))
 
                     .build();
 
